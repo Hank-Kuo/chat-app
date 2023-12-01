@@ -1,0 +1,3 @@
+DROP TABLE IF EXISTS user_to_channel;
+DROP TABLE IF EXISTS channel;
+DROP TABLE IF EXISTS users;

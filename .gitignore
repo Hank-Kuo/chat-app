@@ -1,0 +1,16 @@
+/assets
+/pgdata
+/cassandra-node-0
+.env
+
+
+.DS_Store
+/build
+/coverage
+
+
+frontend/node_modules
+frontend/.cache
+frontend//build
+frontend//public/build
+frontend/.env
