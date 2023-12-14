@@ -21,8 +21,8 @@ func NewHttpHandler(e *gin.RouterGroup, messageSrv messageSrv.Service, logger lo
 		messageSrv: messageSrv,
 		logger:     logger,
 	}
-	e.POST("/get/message", handler.GetMessage) // get message
-	e.POST("/get/reply", handler.GetReply)     // get reply
+	e.GET("/message", handler.GetMessage) // get message
+	e.GET("/reply", handler.GetReply)     // get reply
 
 	e.POST("/message", handler.CreateMessage) // send message
 	e.POST("/reply", handler.CreateReply)     // send reply
@@ -40,13 +40,14 @@ func (h *httpHandler) CreateMessage(c *gin.Context) {
 		return
 	}
 
-	if err := h.messageSrv.CreateMessage(ctx, &body); err != nil {
+	message, err := h.messageSrv.CreateMessage(ctx, &body)
+	if err != nil {
 		tracer.AddSpanError(span, err)
 		httpResponse.Fail(err, h.logger).ToJSON(c)
 		return
 	}
 
-	httpResponse.OK(http.StatusOK, "create message successfully", nil).ToJSON(c)
+	httpResponse.OK(http.StatusOK, "create message successfully", message).ToJSON(c)
 
 }
 
@@ -75,13 +76,13 @@ func (h *httpHandler) GetMessage(c *gin.Context) {
 	ctx, span := tracer.NewSpan(ctx, "MessageHttpHandler.GetMessage", nil)
 	defer span.End()
 
-	var body dto.GetMessageReqDto
-	if err := c.ShouldBindJSON(&body); err != nil {
+	var queryParams dto.GetMessageQueryDto
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
 		httpResponse.Fail(err, h.logger).ToJSON(c)
 		return
 	}
 
-	messages, err := h.messageSrv.GetMessage(ctx, body.ChannelID)
+	messages, err := h.messageSrv.GetMessage(ctx, &queryParams)
 	if err != nil {
 		tracer.AddSpanError(span, err)
 		httpResponse.Fail(err, h.logger).ToJSON(c)
@@ -96,18 +97,19 @@ func (h *httpHandler) GetReply(c *gin.Context) {
 	ctx, span := tracer.NewSpan(ctx, "MessageHttpHandler.GetReply", nil)
 	defer span.End()
 
-	var body dto.GetReplyReqDto
-	if err := c.ShouldBindJSON(&body); err != nil {
+	var queryParams dto.GetReplyQueryDto
+	if err := c.ShouldBindQuery(&queryParams); err != nil {
 		httpResponse.Fail(err, h.logger).ToJSON(c)
 		return
 	}
 
-	// messages, err := h.messageSrv.Get(ctx, body.ChannelID)
-	// if err != nil {
-	// 	tracer.AddSpanError(span, err)
-	// 	httpResponse.Fail(err, h.logger).ToJSON(c)
-	// 	return
-	// }
+	reply, err := h.messageSrv.GetReply(ctx, queryParams.MessageID)
+	if err != nil {
+		tracer.AddSpanError(span, err)
 
-	httpResponse.OK(http.StatusOK, "get reply successfully", nil).ToJSON(c)
+		httpResponse.Fail(err, h.logger).ToJSON(c)
+		return
+	}
+
+	httpResponse.OK(http.StatusOK, "get reply successfully", reply).ToJSON(c)
 }

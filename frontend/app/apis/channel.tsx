@@ -1,5 +1,3 @@
-import { json } from "@remix-run/node";
-
 export interface channelsType {
   id: string;
   name: string;

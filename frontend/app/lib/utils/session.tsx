@@ -12,7 +12,7 @@ const { getSession, commitSession, destroySession } =
   createCookieSessionStorage<SessionData, SessionFlashData>({
     cookie: {
       name: "__session",
-      expires: new Date(Date.now() + 60_000),
+      expires: new Date(Date.now() + 8 * 60 * 60 * 1000),
       maxAge: 60,
       secrets: ["chat-app"],
       secure: true,

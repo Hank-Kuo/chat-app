@@ -6,4 +6,4 @@ CREATE TABLE IF NOT EXISTS reply (
     username TEXT,
     created_at  TIMESTAMP,
     PRIMARY KEY(message_id, reply_id)
-);
+) WITH CLUSTERING ORDER BY (reply_id DESC);

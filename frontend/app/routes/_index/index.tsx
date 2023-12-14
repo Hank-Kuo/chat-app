@@ -37,8 +37,8 @@ interface UserInfo {
 }
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
-  const userInfoStr = JSON.stringify(session.get("userInfo")) || "";
-  if (userInfoStr.length === 0) {
+  const userInfoStr = session.get("userInfo") as string;
+  if (!userInfoStr || userInfoStr.length === 0) {
     return redirect("/login");
   }
 
@@ -86,7 +86,7 @@ enum FormAction {
 
 export async function action({ request }: ActionFunctionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
-  const userInfoStr = JSON.stringify(session.get("userInfo")) || "";
+  const userInfoStr = session.get("userInfo") as string;
   if (userInfoStr.length === 0) {
     return redirect("/login");
   }

@@ -28,8 +28,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
 export async function action({ request }: ActionFunctionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
   const form = await request.formData();
-  const email = `${form.get("email")}`;
-  const password = `${form.get("password")}`;
+  const email = form.get("email") as string;
+  const password = form.get("password") as string;
 
   if (validEmail(email) === false) {
     return json(
@@ -65,7 +65,7 @@ export async function action({ request }: ActionFunctionArgs) {
       }
     );
   }
-  session.set("userInfo", res["data"]);
+  session.set("userInfo", JSON.stringify(res["data"]));
 
   return redirect("/", {
     headers: {

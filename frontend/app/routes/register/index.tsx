@@ -69,9 +69,7 @@ export async function action({ request }: ActionFunctionArgs) {
     );
   }
 
-  // session.set("userInfo", `${email}`);
-
-  return redirect("/", {
+  return redirect("/login", {
     headers: {
       "Set-Cookie": await commitSession(session),
     },

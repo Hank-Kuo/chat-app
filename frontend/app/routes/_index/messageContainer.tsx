@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 import { S } from "./styles";
 import { channelsType } from "../../apis/channel";
+import { getMessagesAPI, getRepliesAPI } from "../../apis/message";
 const DATA = [
   {
     id: 1,
@@ -51,6 +52,8 @@ interface MessageContainerProps {
 
 export default function MessageContainer(props: MessageContainerProps) {
   const messagesRef = React.createRef<HTMLDivElement>();
+  const [text, setText] = React.useState("");
+  const [messages, setMessages] = React.useState([]);
   const [showJoin, setShowJoin] = React.useState(true);
 
   React.useEffect(() => {
@@ -58,12 +61,27 @@ export default function MessageContainer(props: MessageContainerProps) {
       messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     }
 
+    const header = new Headers();
+
+    // header.append("Content-Type", "application/json");
+    // header.append("Authorization", `Bearer ${userInfo.token}`);
+
+    // console.log(messages);
+
     if (props.userChannels.find((v) => v.id === props.selectChannel)) {
       setShowJoin(false);
+      getMessagesAPI({ channelId: props.selectChannel }, header).then((v) => {
+        setMessages(v.messages)
+        // console.log(v);
+      });
     } else {
       setShowJoin(true);
     }
   }, [props.selectChannel]);
+
+  const handleClick = (e: React.MouseEvent<HTMLElement>) => {
+    setText("");
+  };
 
   return (
     <>
@@ -93,8 +111,14 @@ export default function MessageContainer(props: MessageContainerProps) {
           })}
         </S.Box>
         <S.InputBox>
-          <S.Input />
-          <S.SubmitBtn>Submit</S.SubmitBtn>
+          <S.Input
+            name="message"
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+            }}
+          />
+          <S.SubmitBtn onClick={handleClick}>Submit</S.SubmitBtn>
         </S.InputBox>
         {showJoin ? (
           <S.JoinBox method="post" onSubmit={() => setShowJoin(false)}>

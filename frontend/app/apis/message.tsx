@@ -3,130 +3,71 @@ interface getMessagesPayload {
 }
 
 interface getRepliesPayload {
-  channelId: string;
-  messageId: string;
+  messageId: number;
 }
 
 interface addReplyPayload {
-  channelId: string;
-  messageId: string;
-  userId: string;
+  message_id: number;
+  user_id: string;
+  username: string;
   content: string;
-  createdAt: string;
 }
+
 interface addMessagePayload {
-  channelId: string;
+  channel_id: string;
   userId: string;
+  user_id: string;
+  username: string;
   content: string;
-  createdAt: string;
 }
 
-export async function getMessagesAPI(data: getMessagesPayload) {
-  return {
-    status: true,
-    messages: [
-      {
-        id: 1,
-        name: "hank",
-        creatdAt: "2023/10/1",
-        message:
-          "message message message message message message message message message message message message message message message message message message message message message message",
-      },
-      {
-        id: 2,
-        name: "hank",
-        creatdAt: "2023/10/1",
-        message: "message",
-      },
-      {
-        id: 3,
-        name: "hank",
-        creatdAt: "2023/10/1",
-        message: "message",
-      },
-      {
-        id: 4,
-        name: "hank",
-        creatdAt: "2023/10/1",
-        message: "message",
-      },
-      { id: 5, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      { id: 6, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      { id: 7, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      { id: 8, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      { id: 9, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      { id: 10, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      { id: 11, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      {
-        id: 12,
-        name: "hank",
-        creatdAt: "2023/10/1",
-        message:
-          "message message message message message message message message message message message message message message message message message message message message message message",
-      },
-    ],
-    errMessage: "",
-  };
+export async function getMessagesAPI(
+  data: getMessagesPayload,
+  header: HeadersInit
+) {
+  const res = await fetch(
+    `http://localhost:9000/api/message?channel_id=${data.channelId}`,
+    {
+      headers: header,
+    }
+  );
+
+  return await res.json();
 }
 
-export async function getRepliesAPI(data: getRepliesPayload) {
-  return {
-    status: true,
-    messages: [
-      {
-        id: 1,
-        name: "hank",
-        creatdAt: "2023/10/1",
-        message:
-          "message message message message message message message message message message message message message message message message message message message message message message",
-      },
-      {
-        id: 2,
-        name: "hank",
-        creatdAt: "2023/10/1",
-        message: "message",
-      },
-      {
-        id: 3,
-        name: "hank",
-        creatdAt: "2023/10/1",
-        message: "message",
-      },
-      {
-        id: 4,
-        name: "hank",
-        creatdAt: "2023/10/1",
-        message: "message",
-      },
-      { id: 5, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      { id: 6, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      { id: 7, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      { id: 8, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      { id: 9, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      { id: 10, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      { id: 11, name: "hank", creatdAt: "2023/10/1", message: "message" },
-      {
-        id: 12,
-        name: "hank",
-        creatdAt: "2023/10/1",
-        message:
-          "message message message message message message message message message message message message message message message message message message message message message message",
-      },
-    ],
-    message: "",
-  };
+export async function getRepliesAPI(
+  data: getRepliesPayload,
+  header: HeadersInit
+) {
+  const res = await fetch(
+    `http://localhost:9000/api/reply?message_id=${data.messageId}`,
+    {
+      headers: header,
+    }
+  );
+
+  return await res.json();
 }
 
-export async function addMessageAPI(data: addMessagePayload) {
-  return {
-    status: true,
-    errMessage: "",
-  };
+export async function addMessageAPI(
+  data: addMessagePayload,
+  header: HeadersInit
+) {
+  const res = await fetch(`http://localhost:9000/api/message`, {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: header,
+  });
+
+  return await res.json();
 }
 
-export async function addReplyAPI(data: addReplyPayload) {
-  return {
-    status: true,
-    message: "",
-  };
+export async function addReplyAPI(data: addReplyPayload, header: HeadersInit) {
+  const res = await fetch(`http://localhost:9000/api/reply`, {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: header,
+  });
+
+  return await res.json();
 }

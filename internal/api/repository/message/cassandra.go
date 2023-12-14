@@ -4,6 +4,7 @@ import (
 	"chat-app/internal/models"
 	"chat-app/pkg/tracer"
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -44,16 +45,26 @@ func (r *messageRepo) CreateReply(ctx context.Context, reply *models.Reply) erro
 	return nil
 }
 
-func (r *messageRepo) GetMessage(ctx context.Context, channelID string) ([]*models.Message, error) {
+func (r *messageRepo) GetMessage(ctx context.Context, channelID string, cursor int64, limit int) ([]*models.Message, error) {
 	ctx, span := tracer.NewSpan(ctx, "MessageRepo.GetMessage", nil)
 	defer span.End()
 
-	sqlQuery := `
+	var filterQuery string
+	var args []interface{}
+
+	if cursor > 0 {
+		filterQuery = "AND message_id <= ?"
+		args = []interface{}{channelID, cursor}
+	} else {
+		args = []interface{}{channelID}
+	}
+
+	sqlQuery := fmt.Sprintf(`
 		SELECT channel_id, bucket, message_id, 
 		content, user_id, username, created_at 
-		FROM message WHERE channel_id = ? LIMIT 10 ALLOW FILTERING`
+		FROM message WHERE channel_id = ? %s LIMIT %d ALLOW FILTERING`, filterQuery, limit)
 
-	scanner := r.session.Query(sqlQuery, channelID).WithContext(ctx).Iter().Scanner()
+	scanner := r.session.Query(sqlQuery, args...).WithContext(ctx).Iter().Scanner()
 	messages := []*models.Message{}
 
 	for scanner.Next() {
@@ -89,7 +100,7 @@ func (r *messageRepo) GetReply(ctx context.Context, messageID int64) ([]*models.
 
 	for scanner.Next() {
 		var reply models.Reply
-		err := scanner.Scan(&reply.MessageID, &reply.ReplyID, &reply.Content, &reply.Content, &reply.UserID, &reply.Username, &reply.CreatedAt)
+		err := scanner.Scan(&reply.MessageID, &reply.ReplyID, &reply.Content, &reply.UserID, &reply.Username, &reply.CreatedAt)
 		if err != nil {
 			tracer.AddSpanError(span, err)
 			return nil, errors.Wrap(err, "MessageRepo.GetReply")

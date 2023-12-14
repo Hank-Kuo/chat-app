@@ -2,6 +2,7 @@ package message
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"chat-app/config"
@@ -10,16 +11,18 @@ import (
 	"chat-app/internal/models"
 	"chat-app/pkg/logger"
 	"chat-app/pkg/tracer"
+	"chat-app/pkg/utils"
 
-	// "chat-app/pkg/customError"
+	"chat-app/pkg/customError"
 	"github.com/bwmarrin/snowflake"
 	"github.com/pkg/errors"
 )
 
 type Service interface {
-	CreateMessage(ctx context.Context, message *dto.CreateMessageReqDto) error
+	CreateMessage(ctx context.Context, message *dto.CreateMessageReqDto) (*models.Message, error)
 	CreateReply(ctx context.Context, reply *dto.CreateReplyReqDto) error
-	GetMessage(ctx context.Context, channelID string) ([]*models.Message, error)
+	GetMessage(ctx context.Context, m *dto.GetMessageQueryDto) (*dto.GetMessageResDto, error)
+	GetReply(ctx context.Context, messageID int64) ([]*models.Reply, error)
 }
 
 type messageSrv struct {
@@ -38,26 +41,26 @@ func NewService(cfg *config.Config, messageRepo messageRepo.Repository, node *sn
 	}
 }
 
-func (srv *messageSrv) CreateMessage(ctx context.Context, message *dto.CreateMessageReqDto) error {
+func (srv *messageSrv) CreateMessage(ctx context.Context, message *dto.CreateMessageReqDto) (*models.Message, error) {
 	c, span := tracer.NewSpan(ctx, "MessageService.CreateMessage", nil)
 	defer span.End()
 
 	id := srv.snowflake.Generate().Int64()
-
-	if err := srv.messageRepo.CreateMessage(c, &models.Message{
+	m := &models.Message{
 		ChannelID: message.ChannelID,
-		Bucket:    3,
+		Bucket:    utils.MakeBucket(id),
 		MessageID: id,
 		Content:   message.Content,
 		UserID:    message.UserID,
 		Username:  message.Username,
 		CreatedAt: time.Now().In(srv.cfg.Server.Location),
-	}); err != nil {
+	}
+	if err := srv.messageRepo.CreateMessage(c, m); err != nil {
 		tracer.AddSpanError(span, err)
-		return errors.Wrap(err, "MessageService.CreateMessage")
+		return nil, errors.Wrap(err, "MessageService.CreateMessage")
 	}
 
-	return nil
+	return m, nil
 }
 
 func (srv *messageSrv) CreateReply(ctx context.Context, reply *dto.CreateReplyReqDto) error {
@@ -81,42 +84,52 @@ func (srv *messageSrv) CreateReply(ctx context.Context, reply *dto.CreateReplyRe
 	return nil
 }
 
-func (srv *messageSrv) GetMessage(ctx context.Context, channelID string) ([]*models.Message, error) {
-	c, span := tracer.NewSpan(ctx, "MessageService.Get", nil)
-	defer span.End()
-
-	messages, err := srv.messageRepo.GetMessage(c, channelID)
-	if err != nil {
-		tracer.AddSpanError(span, err)
-		return nil, errors.Wrap(err, "MessageService.Get")
-	}
-
-	return messages, nil
+type Cursor struct {
+	NextCursor string
 }
 
-// func (srv *messageSrv) Disconnect(ctx context.Context) error {
-// 	ctx, span := tracer.NewSpan(ctx, "MessageService.SendMessage", nil)
-// 	defer span.End()
-// 	// {"connect_1": group: 1, session_at: 2023/11/1}
+func (srv *messageSrv) GetMessage(ctx context.Context, m *dto.GetMessageQueryDto) (*dto.GetMessageResDto, error) {
+	c, span := tracer.NewSpan(ctx, "MessageService.GetMessage", nil)
+	defer span.End()
+	cursor := int64(-1)
 
-// 	_, ok := srv.clients.Channel["2313"]
-// 	if ok {
+	if len(m.Cursor) > 0 {
+		_cursor, err := utils.DecodeCursor("message_id", m.Cursor)
+		cursor = _cursor
+		if err != nil {
+			return nil, customError.ErrBadQueryParams
+		}
+	}
 
-// 	}
-// 	fmt.Println(ok)
+	limit := 11
+	messages, err := srv.messageRepo.GetMessage(c, m.ChannelID, cursor, limit)
 
-// 	return nil
-// }
+	if err != nil {
+		tracer.AddSpanError(span, err)
+		return nil, errors.Wrap(err, "MessageService.GetMessage")
+	}
+	// adjust cursor
+	var nextCursor string
+	if len(messages) >= limit {
+		nextCursor = utils.EncodeCursor("message_id", messages[limit-1].MessageID)
+		messages = messages[:limit-1]
+	}
 
-// func (srv *messageSrv) ReceivedMessage(ctx context.Context) error {
-// 	ctx, span := tracer.NewSpan(ctx, "MessageService.ReceivedMessage", nil)
-// 	defer span.End()
+	return &dto.GetMessageResDto{
+		Messages:   messages,
+		NextCursor: nextCursor,
+	}, nil
+}
 
-// 	_, ok := srv.clients.Channel["2313"]
-// 	if ok {
+func (srv *messageSrv) GetReply(ctx context.Context, messageID int64) ([]*models.Reply, error) {
+	c, span := tracer.NewSpan(ctx, "MessageService.GetReply", nil)
+	defer span.End()
 
-// 	}
-// 	fmt.Println(ok)
+	reply, err := srv.messageRepo.GetReply(c, messageID)
+	if err != nil {
+		tracer.AddSpanError(span, err)
+		return nil, errors.Wrap(err, "MessageService.GetReply")
+	}
 
-// 	return nil
-// }
+	return reply, nil
+}
