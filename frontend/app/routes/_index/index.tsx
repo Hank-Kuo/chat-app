@@ -12,6 +12,7 @@ import Sidebar from "../../components/sidebar";
 import AddChannelModal from "./addChannelModal";
 import ReplyModal from "./replyModal";
 import MessageContainer from "./messageContainer";
+import getHeader from "../../lib/utils/header";
 import { getSession, commitSession } from "../../lib/utils/session";
 import {
   getAllChannelsAPI,
@@ -29,14 +30,6 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-interface UserInfo {
-  id: string;
-  name: string;
-  email: string;
-  token: string;
-  created_at: string;
-}
-
 enum FormAction {
   JOIN_CHANNEL_ACTION = "joinAction",
   ADD_CHANNEL_ACTION = "addAction",
@@ -44,28 +37,24 @@ enum FormAction {
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
-  const userInfoStr = session.get("userInfo") as string;
-  if (!userInfoStr || userInfoStr.length === 0) {
+  const userInfo = session.get("userInfo");
+  if (!userInfo || userInfo.token.length === 0) {
     return redirect("/login");
   }
 
-  const userInfo: UserInfo = JSON.parse(userInfoStr);
-  const header = new Headers();
-
-  header.append("Content-Type", "application/json");
-  header.append("Authorization", `Bearer ${userInfo.token}`);
-  const channelsRes = await getAllChannelsAPI(header);
+  const channelsRes = await getAllChannelsAPI(getHeader(userInfo.token));
 
   let channels: ChannelType[] = [];
   let userChannels: ChannelType[] = [];
   let err = "";
+
   if (channelsRes["status"] === "success") {
     channels = channelsRes["data"] as ChannelType[];
   } else {
     err = channelsRes["message"];
   }
 
-  const userChannelsRes = await getUserChannelsAPI(header);
+  const userChannelsRes = await getUserChannelsAPI(getHeader(userInfo.token));
   if (userChannelsRes["status"] === "success") {
     userChannels = userChannelsRes["data"];
   } else {
@@ -76,6 +65,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     {
       channels: channels,
       userChannels: userChannels,
+      userInfo: userInfo,
       error: err,
     },
     {
@@ -88,16 +78,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export async function action({ request }: ActionFunctionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
-  const userInfoStr = session.get("userInfo") as string;
-  if (userInfoStr.length === 0) {
+  const userInfo = session.get("userInfo");
+  if (!userInfo || userInfo.token.length === 0) {
     return redirect("/login");
   }
 
-  const userInfo: UserInfo = JSON.parse(userInfoStr);
-  const header = new Headers();
-
-  header.append("Content-Type", "application/json");
-  header.append("Authorization", `Bearer ${userInfo.token}`);
+  const header = getHeader(userInfo.token);
 
   const form = await request.formData();
   const formAction = form.get("formAction");
@@ -151,6 +137,7 @@ export default function Index() {
   const [showAddChannel, setShowAddChannel] = React.useState(false);
   const [selectMessage, setSelectMessage] = React.useState(-1);
   const [showReply, setShowReply] = React.useState(false);
+
   return (
     <S.Wrapper>
       <Sidebar

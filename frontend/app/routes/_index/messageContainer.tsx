@@ -1,14 +1,12 @@
 import React, { Suspense } from "react";
+import { useLoaderData } from "@remix-run/react";
 
+import { loader } from "./index";
+import getHeader from "../../lib/utils/header";
 import { convertDate } from "../../lib/utils/date";
 import { ChannelType } from "../../apis/channel";
 import useInfiniteScroll from "../../lib/hook/useInfiniteScroll";
-import {
-  getMessagesAPI,
-  messageAPI123,
-  addMessageAPI,
-  MessageType,
-} from "../../apis/message";
+import { getMessagesAPI, addMessageAPI, MessageType } from "../../apis/message";
 import { S } from "./styles";
 
 interface MessageContainerProps {
@@ -19,6 +17,7 @@ interface MessageContainerProps {
 }
 
 export default function MessageContainer(props: MessageContainerProps) {
+  const { userInfo } = useLoaderData<typeof loader>();
   const [text, setText] = React.useState("");
   const [messages, setMessages] = React.useState<MessageType[]>([]);
   const [showJoin, setShowJoin] = React.useState(true);
@@ -32,19 +31,16 @@ export default function MessageContainer(props: MessageContainerProps) {
     ) {
       setShowJoin(false);
 
-      messageAPI123.get({ channelId: props.selectChannel }).then((v) => {
-        console.log(v);
-      });
-
-      getMessagesAPI({ channelId: props.selectChannel }, new Headers()).then(
-        (v) => {
-          setMessages(v.data.messages);
-          if (v.data.next_cursor.length != 0) {
-            setNextCusror(v.data.next_cursor);
-            setHasMore(true);
-          }
+      getMessagesAPI(
+        { channelId: props.selectChannel },
+        getHeader(userInfo.token)
+      ).then((v) => {
+        setMessages(v.data.messages);
+        if (v.data.next_cursor.length != 0) {
+          setNextCusror(v.data.next_cursor);
+          setHasMore(true);
         }
-      );
+      });
     } else {
       setShowJoin(true);
     }
@@ -53,7 +49,7 @@ export default function MessageContainer(props: MessageContainerProps) {
   const fetchData = () => {
     getMessagesAPI(
       { channelId: props.selectChannel, nextCursor: nextCursor },
-      new Headers()
+      getHeader(userInfo.token)
     ).then((v) => {
       setMessages((prev) => {
         return [...prev, ...v.data.messages];
@@ -69,13 +65,14 @@ export default function MessageContainer(props: MessageContainerProps) {
   };
 
   const [lastElementRef, loading] = useInfiniteScroll(hasMore, fetchData);
+
   // submit user text
   const handleClick = () => {
     addMessageAPI(
       {
         channel_id: props.selectChannel,
-        user_id: "257e4caf-fb4b-43a1-a4b3-cca94f583bd5",
-        username: "hank",
+        user_id: userInfo.id,
+        username: userInfo.name,
         content: text,
       },
       new Headers()

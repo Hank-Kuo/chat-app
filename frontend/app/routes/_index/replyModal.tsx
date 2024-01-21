@@ -1,5 +1,8 @@
 import React, { Suspense } from "react";
+import { useLoaderData } from "@remix-run/react";
 
+import { loader } from "./index";
+import getHeader from "../../lib/utils/header";
 import { convertDate } from "../../lib/utils/date";
 import useInfiniteScroll from "../../lib/hook/useInfiniteScroll";
 import useClickOutside from "../../lib/hook/useClickOutside";
@@ -15,6 +18,7 @@ interface ReplyModalProps {
 }
 
 const ReplyModal = (props: ReplyModalProps) => {
+  const { userInfo } = useLoaderData<typeof loader>();
   const modalRef = React.useRef(null);
   const [text, setText] = React.useState("");
   const [replies, setReplies] = React.useState<ReplyType[]>([]);
@@ -25,7 +29,7 @@ const ReplyModal = (props: ReplyModalProps) => {
   const fetchData = () => {
     getRepliesAPI(
       { messageId: props.selectMessage, nextCursor: nextCursor },
-      new Headers()
+      getHeader(userInfo.token)
     ).then((v) => {
       setReplies((prev) => {
         return [...prev, ...v.data.replies];
@@ -44,15 +48,16 @@ const ReplyModal = (props: ReplyModalProps) => {
 
   React.useEffect(() => {
     if (props.selectMessage > 0) {
-      getRepliesAPI({ messageId: props.selectMessage }, new Headers()).then(
-        (v) => {
-          setReplies(v.data.replies);
-          if (v.data.next_cursor.length != 0) {
-            setNextCusror(v.data.next_cursor);
-            setHasMore(true);
-          }
+      getRepliesAPI(
+        { messageId: props.selectMessage },
+        getHeader(userInfo.token)
+      ).then((v) => {
+        setReplies(v.data.replies);
+        if (v.data.next_cursor.length != 0) {
+          setNextCusror(v.data.next_cursor);
+          setHasMore(true);
         }
-      );
+      });
     }
   }, [props.show]);
 
@@ -65,11 +70,11 @@ const ReplyModal = (props: ReplyModalProps) => {
     addReplyAPI(
       {
         message_id: props.selectMessage,
-        user_id: "257e4caf-fb4b-43a1-a4b3-cca94f583bd5",
-        username: "hank",
+        user_id: userInfo.id,
+        username: userInfo.name,
         content: text,
       },
-      new Headers()
+      getHeader(userInfo.token)
     ).then((v) => {
       if (v["status"] === "success") {
         const reply: ReplyType = v["data"];

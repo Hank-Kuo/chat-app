@@ -1,5 +1,3 @@
-import { get } from "./config";
-
 export interface MessageType {
   channel_id: string;
   message_id: number;
@@ -41,13 +39,6 @@ interface addMessagePayload {
   username: string;
   content: string;
 }
-
-export const messageAPI123 = {
-  get(data: getMessagesPayload) {
-    const queryParams = data.nextCursor ? `&cursor=${data.nextCursor}` : "";
-    return get(`/message?channel_id=${data.channelId}${queryParams}`);
-  },
-};
 
 export async function getMessagesAPI(
   data: getMessagesPayload,

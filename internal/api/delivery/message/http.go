@@ -1,7 +1,6 @@
 package message
 
 import (
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 
@@ -22,11 +21,10 @@ func NewHttpHandler(e *gin.RouterGroup, messageSrv messageSrv.Service, logger lo
 		messageSrv: messageSrv,
 		logger:     logger,
 	}
-	e.GET("/message", handler.GetMessage) // get message
-	e.GET("/reply", handler.GetReply)     // get reply
-
-	e.POST("/message", handler.CreateMessage) // send message
-	e.POST("/reply", handler.CreateReply)     // send reply
+	e.GET("/message", handler.GetMessage)
+	e.GET("/reply", handler.GetReply)
+	e.POST("/message", handler.CreateMessage)
+	e.POST("/reply", handler.CreateReply)
 
 }
 
@@ -91,7 +89,6 @@ func (h *httpHandler) GetMessage(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(messages)
 	httpResponse.OK(http.StatusOK, "get message successfully", messages).ToJSON(c)
 }
 

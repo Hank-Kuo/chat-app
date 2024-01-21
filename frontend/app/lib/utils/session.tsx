@@ -1,7 +1,15 @@
 import { createCookieSessionStorage } from "@remix-run/node";
 
+export interface UserInfo {
+  id: string;
+  name: string;
+  email: string;
+  token: string;
+  created_at: string;
+}
+
 type SessionData = {
-  userInfo: string;
+  userInfo: UserInfo;
 };
 
 type SessionFlashData = {
@@ -13,7 +21,6 @@ const { getSession, commitSession, destroySession } =
     cookie: {
       name: "__session",
       expires: new Date(Date.now() + 8 * 60 * 60 * 1000),
-      maxAge: 60,
       secrets: ["chat-app"],
       secure: true,
     },

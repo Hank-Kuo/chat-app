@@ -13,6 +13,7 @@ import { S } from "./styles";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
+
   if (session.has("userInfo")) {
     return redirect("/");
   }
@@ -65,7 +66,7 @@ export async function action({ request }: ActionFunctionArgs) {
       }
     );
   }
-  session.set("userInfo", JSON.stringify(res["data"]));
+  session.set("userInfo", res["data"]);
 
   return redirect("/", {
     headers: {
