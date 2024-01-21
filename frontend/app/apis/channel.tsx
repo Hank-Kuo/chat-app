@@ -1,13 +1,7 @@
-export interface channelsType {
+export interface ChannelType {
   id: string;
   name: string;
   createdAt: string;
-}
-
-export interface getAllChannelsResPayload {
-  status: boolean;
-  channels: channelsType[];
-  errMessage: string;
 }
 
 interface addChannelPayload {

@@ -1,6 +1,7 @@
 package message
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 
@@ -62,13 +63,14 @@ func (h *httpHandler) CreateReply(c *gin.Context) {
 		return
 	}
 
-	if err := h.messageSrv.CreateReply(ctx, &body); err != nil {
+	reply, err := h.messageSrv.CreateReply(ctx, &body)
+	if err != nil {
 		tracer.AddSpanError(span, err)
 		httpResponse.Fail(err, h.logger).ToJSON(c)
 		return
 	}
 
-	httpResponse.OK(http.StatusOK, "create reply successfully", nil).ToJSON(c)
+	httpResponse.OK(http.StatusOK, "create reply successfully", reply).ToJSON(c)
 }
 
 func (h *httpHandler) GetMessage(c *gin.Context) {
@@ -89,6 +91,7 @@ func (h *httpHandler) GetMessage(c *gin.Context) {
 		return
 	}
 
+	fmt.Println(messages)
 	httpResponse.OK(http.StatusOK, "get message successfully", messages).ToJSON(c)
 }
 
@@ -103,7 +106,7 @@ func (h *httpHandler) GetReply(c *gin.Context) {
 		return
 	}
 
-	reply, err := h.messageSrv.GetReply(ctx, queryParams.MessageID)
+	reply, err := h.messageSrv.GetReply(ctx, &queryParams)
 	if err != nil {
 		tracer.AddSpanError(span, err)
 

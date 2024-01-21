@@ -22,6 +22,8 @@ export const S = {
     overflow: scroll;
     margin: 20px 0;
     padding: 0 20px;
+    display: flex;
+    flex-direction: column-reverse;
   `,
   InputBox: styled.div`
     display: flex;
@@ -171,6 +173,8 @@ export const M = {
     font-size: 50px;
   `,
   ReplyBox: styled.div`
+    display: flex;
+    flex-direction: column-reverse;
     flex: 1;
     overflow: scroll;
     padding: 10px 20px;

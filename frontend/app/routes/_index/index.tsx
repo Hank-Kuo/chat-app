@@ -9,7 +9,7 @@ import {
 import { useLoaderData } from "@remix-run/react";
 
 import Sidebar from "../../components/sidebar";
-import ChannelModal from "./channelModal";
+import AddChannelModal from "./addChannelModal";
 import ReplyModal from "./replyModal";
 import MessageContainer from "./messageContainer";
 import { getSession, commitSession } from "../../lib/utils/session";
@@ -18,6 +18,7 @@ import {
   getUserChannelsAPI,
   addChannelAPI,
   joinChannelAPI,
+  ChannelType,
 } from "../../apis/channel";
 import { S } from "./styles";
 
@@ -35,6 +36,12 @@ interface UserInfo {
   token: string;
   created_at: string;
 }
+
+enum FormAction {
+  JOIN_CHANNEL_ACTION = "joinAction",
+  ADD_CHANNEL_ACTION = "addAction",
+}
+
 export async function loader({ request }: LoaderFunctionArgs) {
   const session = await getSession(request.headers.get("Cookie"));
   const userInfoStr = session.get("userInfo") as string;
@@ -49,11 +56,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
   header.append("Authorization", `Bearer ${userInfo.token}`);
   const channelsRes = await getAllChannelsAPI(header);
 
-  let channels = [];
-  let userChannels = [];
+  let channels: ChannelType[] = [];
+  let userChannels: ChannelType[] = [];
   let err = "";
   if (channelsRes["status"] === "success") {
-    channels = channelsRes["data"];
+    channels = channelsRes["data"] as ChannelType[];
   } else {
     err = channelsRes["message"];
   }
@@ -77,11 +84,6 @@ export async function loader({ request }: LoaderFunctionArgs) {
       },
     }
   );
-}
-
-enum FormAction {
-  JOIN_CHANNEL_ACTION = "joinAction",
-  ADD_CHANNEL_ACTION = "addAction",
 }
 
 export async function action({ request }: ActionFunctionArgs) {
@@ -146,35 +148,44 @@ export async function action({ request }: ActionFunctionArgs) {
 export default function Index() {
   const { channels, userChannels } = useLoaderData<typeof loader>();
   const [selectChannel, setSelectChannel] = React.useState("");
-  const [showChannel, setShowChannel] = React.useState(false);
+  const [showAddChannel, setShowAddChannel] = React.useState(false);
+  const [selectMessage, setSelectMessage] = React.useState(-1);
   const [showReply, setShowReply] = React.useState(false);
-  const title = channels.filter((v: any) => v.id === selectChannel);
-
   return (
     <S.Wrapper>
       <Sidebar
+        channels={channels}
         selectChannel={selectChannel}
         setSelectChannel={(value) => {
           setSelectChannel(value);
         }}
-        setShow={setShowChannel}
+        setShow={setShowAddChannel}
       />
       <S.Container>
         {selectChannel === "" ? null : (
           <>
             <S.ContainerTitle>
-              {title.length > 0 ? title[0].name : ""}
+              {
+                channels.filter((v: ChannelType) => v.id === selectChannel)[0]
+                  .name
+              }
             </S.ContainerTitle>
             <MessageContainer
               userChannels={userChannels}
               selectChannel={selectChannel}
+              setSelectMessage={setSelectMessage}
               setShowReply={setShowReply}
             />
           </>
         )}
       </S.Container>
-      <ReplyModal show={showReply} setShow={setShowReply} />
-      <ChannelModal show={showChannel} setShow={setShowChannel} />
+      <ReplyModal
+        show={showReply}
+        setShow={setShowReply}
+        selectMessage={selectMessage}
+        setSelectMessage={setSelectMessage}
+      />
+      <AddChannelModal show={showAddChannel} setShow={setShowAddChannel} />
     </S.Wrapper>
   );
 }

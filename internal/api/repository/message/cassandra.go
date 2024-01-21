@@ -85,17 +85,33 @@ func (r *messageRepo) GetMessage(ctx context.Context, channelID string, cursor i
 	return messages, nil
 }
 
-func (r *messageRepo) GetReply(ctx context.Context, messageID int64) ([]*models.Reply, error) {
-	ctx, span := tracer.NewSpan(ctx, "MessageRepo.GGetReplyet", nil)
+func (r *messageRepo) GetReply(ctx context.Context, messageID int64, cursor int64, limit int) ([]*models.Reply, error) {
+	ctx, span := tracer.NewSpan(ctx, "MessageRepo.GetReplyet", nil)
 	defer span.End()
 
-	sqlQuery := `
+	var filterQuery string
+	var args []interface{}
+
+	if cursor > 0 {
+		filterQuery = "AND reply_id <= ?"
+		args = []interface{}{messageID, cursor}
+	} else {
+		args = []interface{}{messageID}
+	}
+
+	sqlQuery := fmt.Sprintf(`
 		SELECT message_id, reply_id,
 		content, user_id, username, created_at 
-		FROM reply WHERE message_id = ? LIMIT 10 ALLOW FILTERING
-	`
+		FROM reply WHERE message_id = ? %s LIMIT %d ALLOW FILTERING`, filterQuery, limit)
 
-	scanner := r.session.Query(sqlQuery, messageID).WithContext(ctx).Iter().Scanner()
+	// sqlQuery := `
+	// 	SELECT message_id, reply_id,
+	// 	content, user_id, username, created_at
+	// 	FROM reply WHERE message_id = ? LIMIT 10 ALLOW FILTERING
+	// `
+
+	scanner := r.session.Query(sqlQuery, args...).WithContext(ctx).Iter().Scanner()
+	// scanner := r.session.Query(sqlQuery, messageID).WithContext(ctx).Iter().Scanner()
 	replies := []*models.Reply{}
 
 	for scanner.Next() {

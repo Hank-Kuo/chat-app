@@ -2,7 +2,6 @@ package message
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"chat-app/config"
@@ -18,11 +17,13 @@ import (
 	"github.com/pkg/errors"
 )
 
+const LIMIT = 11
+
 type Service interface {
 	CreateMessage(ctx context.Context, message *dto.CreateMessageReqDto) (*models.Message, error)
-	CreateReply(ctx context.Context, reply *dto.CreateReplyReqDto) error
+	CreateReply(ctx context.Context, reply *dto.CreateReplyReqDto) (*models.Reply, error)
 	GetMessage(ctx context.Context, m *dto.GetMessageQueryDto) (*dto.GetMessageResDto, error)
-	GetReply(ctx context.Context, messageID int64) ([]*models.Reply, error)
+	GetReply(ctx context.Context, r *dto.GetReplyQueryDto) (*dto.GetReplyResDto, error)
 }
 
 type messageSrv struct {
@@ -63,56 +64,54 @@ func (srv *messageSrv) CreateMessage(ctx context.Context, message *dto.CreateMes
 	return m, nil
 }
 
-func (srv *messageSrv) CreateReply(ctx context.Context, reply *dto.CreateReplyReqDto) error {
+func (srv *messageSrv) CreateReply(ctx context.Context, reply *dto.CreateReplyReqDto) (*models.Reply, error) {
 	c, span := tracer.NewSpan(ctx, "MessageService.CreateReply", nil)
 	defer span.End()
 
 	id := srv.snowflake.Generate().Int64()
-
-	if err := srv.messageRepo.CreateReply(c, &models.Reply{
+	r := &models.Reply{
 		MessageID: reply.MessageID,
 		ReplyID:   id,
 		Content:   reply.Content,
 		UserID:    reply.UserID,
 		Username:  reply.Username,
 		CreatedAt: time.Now().In(srv.cfg.Server.Location),
-	}); err != nil {
+	}
+	if err := srv.messageRepo.CreateReply(c, r); err != nil {
 		tracer.AddSpanError(span, err)
-		return errors.Wrap(err, "MessageService.CreateReply")
+		return nil, errors.Wrap(err, "MessageService.CreateReply")
 	}
 
-	return nil
-}
-
-type Cursor struct {
-	NextCursor string
+	return r, nil
 }
 
 func (srv *messageSrv) GetMessage(ctx context.Context, m *dto.GetMessageQueryDto) (*dto.GetMessageResDto, error) {
 	c, span := tracer.NewSpan(ctx, "MessageService.GetMessage", nil)
 	defer span.End()
-	cursor := int64(-1)
 
+	// parse cursor
+	cursor := int64(-1)
 	if len(m.Cursor) > 0 {
 		_cursor, err := utils.DecodeCursor("message_id", m.Cursor)
-		cursor = _cursor
 		if err != nil {
 			return nil, customError.ErrBadQueryParams
 		}
+
+		cursor = _cursor
 	}
 
-	limit := 11
-	messages, err := srv.messageRepo.GetMessage(c, m.ChannelID, cursor, limit)
+	messages, err := srv.messageRepo.GetMessage(c, m.ChannelID, cursor, LIMIT)
 
 	if err != nil {
 		tracer.AddSpanError(span, err)
 		return nil, errors.Wrap(err, "MessageService.GetMessage")
 	}
-	// adjust cursor
+
+	// update message & add nextCursor
 	var nextCursor string
-	if len(messages) >= limit {
-		nextCursor = utils.EncodeCursor("message_id", messages[limit-1].MessageID)
-		messages = messages[:limit-1]
+	if len(messages) >= LIMIT {
+		nextCursor = utils.EncodeCursor("message_id", messages[LIMIT-1].MessageID)
+		messages = messages[:LIMIT-1]
 	}
 
 	return &dto.GetMessageResDto{
@@ -121,15 +120,35 @@ func (srv *messageSrv) GetMessage(ctx context.Context, m *dto.GetMessageQueryDto
 	}, nil
 }
 
-func (srv *messageSrv) GetReply(ctx context.Context, messageID int64) ([]*models.Reply, error) {
+func (srv *messageSrv) GetReply(ctx context.Context, r *dto.GetReplyQueryDto) (*dto.GetReplyResDto, error) {
 	c, span := tracer.NewSpan(ctx, "MessageService.GetReply", nil)
 	defer span.End()
 
-	reply, err := srv.messageRepo.GetReply(c, messageID)
+	cursor := int64(-1)
+
+	if len(r.Cursor) > 0 {
+		_cursor, err := utils.DecodeCursor("reply_id", r.Cursor)
+		if err != nil {
+			return nil, customError.ErrBadQueryParams
+		}
+		cursor = _cursor
+	}
+
+	reply, err := srv.messageRepo.GetReply(c, r.MessageID, cursor, LIMIT)
 	if err != nil {
 		tracer.AddSpanError(span, err)
 		return nil, errors.Wrap(err, "MessageService.GetReply")
 	}
 
-	return reply, nil
+	// update message & add nextCursor
+	var nextCursor string
+	if len(reply) >= LIMIT {
+		nextCursor = utils.EncodeCursor("reply_id", reply[LIMIT-1].ReplyID)
+		reply = reply[:LIMIT-1]
+	}
+
+	return &dto.GetReplyResDto{
+		Replies:    reply,
+		NextCursor: nextCursor,
+	}, nil
 }

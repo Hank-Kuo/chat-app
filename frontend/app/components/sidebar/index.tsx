@@ -1,27 +1,26 @@
 import React from "react";
-import { useLoaderData } from "@remix-run/react";
 
-import { loader } from "../../routes/_index";
+import { ChannelType } from "../../apis/channel";
 import { S } from "./styles";
 
 interface SidebarProps {
+  channels: ChannelType[];
   selectChannel: string;
   setSelectChannel: React.Dispatch<React.SetStateAction<string>>;
   setShow: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
+  channels,
   selectChannel,
   setSelectChannel,
   setShow,
 }) => {
-  const { channels } = useLoaderData<typeof loader>();
-
   return (
     <S.Wrapper>
       <S.Title>Channels</S.Title>
       <S.Container>
-        {channels.map((channel: any) => {
+        {channels.map((channel) => {
           return (
             <S.Item
               key={channel.id}

@@ -1,114 +1,138 @@
 import React, { Suspense } from "react";
+
+import { convertDate } from "../../lib/utils/date";
+import { ChannelType } from "../../apis/channel";
+import useInfiniteScroll from "../../lib/hook/useInfiniteScroll";
+import {
+  getMessagesAPI,
+  messageAPI123,
+  addMessageAPI,
+  MessageType,
+} from "../../apis/message";
 import { S } from "./styles";
-import { channelsType } from "../../apis/channel";
-import { getMessagesAPI, getRepliesAPI } from "../../apis/message";
-const DATA = [
-  {
-    id: 1,
-    name: "hank",
-    creatdAt: "2023/10/1",
-    message:
-      "message message message message message message message message message message message message message message message message message message message message message message",
-  },
-  {
-    id: 2,
-    name: "hank",
-    creatdAt: "2023/10/1",
-    message: "message",
-  },
-  {
-    id: 3,
-    name: "hank",
-    creatdAt: "2023/10/1",
-    message: "message",
-  },
-  {
-    id: 4,
-    name: "hank",
-    creatdAt: "2023/10/1",
-    message: "message",
-  },
-  { id: 5, name: "hank", creatdAt: "2023/10/1", message: "message" },
-  { id: 6, name: "hank", creatdAt: "2023/10/1", message: "message" },
-  { id: 7, name: "hank", creatdAt: "2023/10/1", message: "message" },
-  { id: 8, name: "hank", creatdAt: "2023/10/1", message: "message" },
-  { id: 9, name: "hank", creatdAt: "2023/10/1", message: "message" },
-  { id: 10, name: "hank", creatdAt: "2023/10/1", message: "message" },
-  { id: 11, name: "hank", creatdAt: "2023/10/1", message: "message" },
-  {
-    id: 12,
-    name: "hank",
-    creatdAt: "2023/10/1",
-    message:
-      "message message message message message message message message message message message message message message message message message message message message message message",
-  },
-];
 
 interface MessageContainerProps {
-  userChannels: channelsType[];
+  userChannels: ChannelType[];
   selectChannel: string;
+  setSelectMessage: React.Dispatch<React.SetStateAction<number>>;
   setShowReply: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export default function MessageContainer(props: MessageContainerProps) {
-  const messagesRef = React.createRef<HTMLDivElement>();
   const [text, setText] = React.useState("");
-  const [messages, setMessages] = React.useState([]);
+  const [messages, setMessages] = React.useState<MessageType[]>([]);
   const [showJoin, setShowJoin] = React.useState(true);
+  const [hasMore, setHasMore] = React.useState(false);
+  const [nextCursor, setNextCusror] = React.useState("");
 
   React.useEffect(() => {
-    if (messagesRef.current) {
-      messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
-    }
-
-    const header = new Headers();
-
-    // header.append("Content-Type", "application/json");
-    // header.append("Authorization", `Bearer ${userInfo.token}`);
-
-    // console.log(messages);
-
-    if (props.userChannels.find((v) => v.id === props.selectChannel)) {
+    if (
+      props.selectChannel.length !== 0 &&
+      props.userChannels.find((v) => v.id === props.selectChannel)
+    ) {
       setShowJoin(false);
-      getMessagesAPI({ channelId: props.selectChannel }, header).then((v) => {
-        setMessages(v.messages)
-        // console.log(v);
+
+      messageAPI123.get({ channelId: props.selectChannel }).then((v) => {
+        console.log(v);
       });
+
+      getMessagesAPI({ channelId: props.selectChannel }, new Headers()).then(
+        (v) => {
+          setMessages(v.data.messages);
+          if (v.data.next_cursor.length != 0) {
+            setNextCusror(v.data.next_cursor);
+            setHasMore(true);
+          }
+        }
+      );
     } else {
       setShowJoin(true);
     }
   }, [props.selectChannel]);
 
-  const handleClick = (e: React.MouseEvent<HTMLElement>) => {
-    setText("");
+  const fetchData = () => {
+    getMessagesAPI(
+      { channelId: props.selectChannel, nextCursor: nextCursor },
+      new Headers()
+    ).then((v) => {
+      setMessages((prev) => {
+        return [...prev, ...v.data.messages];
+      });
+
+      if (v.data.next_cursor.length != 0) {
+        setNextCusror(v.data.next_cursor);
+        setHasMore(true);
+      } else {
+        setHasMore(false);
+      }
+    });
+  };
+
+  const [lastElementRef, loading] = useInfiniteScroll(hasMore, fetchData);
+  // submit user text
+  const handleClick = () => {
+    addMessageAPI(
+      {
+        channel_id: props.selectChannel,
+        user_id: "257e4caf-fb4b-43a1-a4b3-cca94f583bd5",
+        username: "hank",
+        content: text,
+      },
+      new Headers()
+    ).then((v) => {
+      if (v["status"] === "success") {
+        const message: MessageType = v["data"];
+        setMessages((prev) => {
+          return [message, ...prev];
+        });
+        setText("");
+      }
+    });
+  };
+
+  // show reply modal
+  const handleReplyClick = (id: number) => {
+    if (showJoin) {
+      return;
+    }
+    props.setShowReply(true);
+    props.setSelectMessage(id);
   };
 
   return (
     <>
       <Suspense fallback={<div>Loading...</div>}>
-        <S.Box ref={messagesRef}>
-          {DATA.map((v) => {
+        <S.Box>
+          {messages.map((v, i) => {
+            const createDate = convertDate(v.created_at);
             return (
-              <S.Item key={v.id}>
+              <S.Item
+                id={`${v.message_id}`}
+                key={v.message_id}
+                ref={
+                  i === messages.length - 1
+                    ? (lastElementRef as React.LegacyRef<HTMLDivElement>)
+                    : null
+                }
+              >
                 <S.ItemInfoBox>
-                  <S.ItemName>{showJoin ? "Default" : v.name}</S.ItemName>
+                  <S.ItemName>{showJoin ? "Default" : v.username}</S.ItemName>
                   <S.ItemTime>
-                    {showJoin ? "2023/01/01" : v.creatdAt}
+                    {showJoin ? "2023/01/01" : createDate}
                   </S.ItemTime>
                 </S.ItemInfoBox>
                 <S.ItemBox>
                   <S.ItemMessage>
-                    {showJoin ? "⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆" : v.message}
+                    {showJoin ? "⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆" : v.content}
                   </S.ItemMessage>
-                  <S.ItemReply
-                    onClick={() => (showJoin ? null : props.setShowReply(true))}
-                  >
+                  <S.ItemReply onClick={() => handleReplyClick(v.message_id)}>
                     REPLY
                   </S.ItemReply>
                 </S.ItemBox>
               </S.Item>
             );
           })}
+          <div>{loading && "Loading..."}</div>
         </S.Box>
         <S.InputBox>
           <S.Input
@@ -120,9 +144,15 @@ export default function MessageContainer(props: MessageContainerProps) {
           />
           <S.SubmitBtn onClick={handleClick}>Submit</S.SubmitBtn>
         </S.InputBox>
+
+        {/* Join button if user not join this channel */}
         {showJoin ? (
           <S.JoinBox method="post" onSubmit={() => setShowJoin(false)}>
-            <S.JoinInput name="channelID" value={props.selectChannel} />
+            <S.JoinInput
+              name="channelID"
+              value={props.selectChannel}
+              onChange={() => {}}
+            />
             <S.JoinBtn name="formAction" value="joinAction">
               Join
             </S.JoinBtn>
