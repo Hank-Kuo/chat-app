@@ -3,9 +3,9 @@ package http
 import (
 	"strings"
 
-	"chat-app/pkg/customError"
-	httpResponse "chat-app/pkg/response/http_response"
-	"chat-app/pkg/utils"
+	"github.com/Hank-Kuo/chat-app/pkg/customError"
+	httpResponse "github.com/Hank-Kuo/chat-app/pkg/response/http_response"
+	"github.com/Hank-Kuo/chat-app/pkg/utils"
 
 	"github.com/gin-gonic/gin"
 )

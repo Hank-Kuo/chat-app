@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"strings"
 
-	"chat-app/pkg/customError"
+	"github.com/Hank-Kuo/chat-app/pkg/customError"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/lib/pq"

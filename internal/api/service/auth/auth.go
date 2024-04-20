@@ -3,14 +3,14 @@ package auth
 import (
 	"context"
 
-	"chat-app/config"
-	authRepo "chat-app/internal/api/repository/auth"
-	"chat-app/internal/dto"
-	"chat-app/internal/models"
-	"chat-app/pkg/customError"
-	"chat-app/pkg/logger"
-	"chat-app/pkg/tracer"
-	"chat-app/pkg/utils"
+	"github.com/Hank-Kuo/chat-app/config"
+	authRepo "github.com/Hank-Kuo/chat-app/internal/api/repository/auth"
+	"github.com/Hank-Kuo/chat-app/internal/dto"
+	"github.com/Hank-Kuo/chat-app/internal/models"
+	"github.com/Hank-Kuo/chat-app/pkg/customError"
+	"github.com/Hank-Kuo/chat-app/pkg/logger"
+	"github.com/Hank-Kuo/chat-app/pkg/tracer"
+	"github.com/Hank-Kuo/chat-app/pkg/utils"
 
 	"github.com/pkg/errors"
 )

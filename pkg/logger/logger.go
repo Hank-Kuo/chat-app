@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 
-	"chat-app/config"
+	"github.com/Hank-Kuo/chat-app/config"
 )
 
 // Logger methods interface

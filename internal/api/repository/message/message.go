@@ -5,7 +5,7 @@ import (
 
 	"github.com/gocql/gocql"
 
-	"chat-app/internal/models"
+	"github.com/Hank-Kuo/chat-app/internal/models"
 )
 
 type Repository interface {

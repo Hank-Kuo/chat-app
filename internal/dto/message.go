@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"chat-app/internal/models"
+	"github.com/Hank-Kuo/chat-app/internal/models"
 )
 
 type CreateMessageReqDto struct {

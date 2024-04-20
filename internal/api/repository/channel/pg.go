@@ -1,9 +1,10 @@
 package channel
 
 import (
-	"chat-app/internal/models"
-	"chat-app/pkg/tracer"
 	"context"
+
+	"github.com/Hank-Kuo/chat-app/internal/models"
+	"github.com/Hank-Kuo/chat-app/pkg/tracer"
 
 	"github.com/pkg/errors"
 )

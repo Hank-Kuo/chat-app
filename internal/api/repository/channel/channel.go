@@ -3,7 +3,7 @@ package channel
 import (
 	"context"
 
-	"chat-app/internal/models"
+	"github.com/Hank-Kuo/chat-app/internal/models"
 
 	"github.com/jmoiron/sqlx"
 )

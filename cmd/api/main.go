@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"log"
 
-	"chat-app/config"
-	"chat-app/internal/server"
-	"chat-app/pkg/database"
-	"chat-app/pkg/logger"
-	"chat-app/pkg/tracer"
+	"github.com/Hank-Kuo/chat-app/config"
+	"github.com/Hank-Kuo/chat-app/internal/server"
+	"github.com/Hank-Kuo/chat-app/pkg/database"
+	"github.com/Hank-Kuo/chat-app/pkg/logger"
+	"github.com/Hank-Kuo/chat-app/pkg/manager"
+	"github.com/Hank-Kuo/chat-app/pkg/tracer"
 
 	"github.com/bwmarrin/snowflake"
 )
@@ -38,6 +39,7 @@ func main() {
 	} else {
 		apiLogger.Info("Jaeger connected")
 	}
+
 	defer func() {
 		if err := traceProvider.Shutdown(context.Background()); err != nil {
 			apiLogger.Error("Cannot shutdown tracer", err)
@@ -63,7 +65,11 @@ func main() {
 		panic(fmt.Errorf("load snowflake: %v", err))
 	}
 
+	rdb := database.ConnectRedis(&cfg.Redis)
+
+	manager := manager.NewClientManager(rdb)
+
 	// init server
-	srv := server.NewServer(cfg, db, cassandraSess, snowflakeNode, apiLogger)
+	srv := server.NewServer(cfg, db, cassandraSess, rdb, manager, snowflakeNode, apiLogger)
 	srv.Run()
 }

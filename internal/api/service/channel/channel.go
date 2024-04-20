@@ -3,13 +3,11 @@ package channel
 import (
 	"context"
 
-	"chat-app/config"
-	channelRepo "chat-app/internal/api/repository/channel"
-	"chat-app/internal/models"
-
-	// "chat-app/pkg/customError"
-	"chat-app/pkg/logger"
-	"chat-app/pkg/tracer"
+	"github.com/Hank-Kuo/chat-app/config"
+	channelRepo "github.com/Hank-Kuo/chat-app/internal/api/repository/channel"
+	"github.com/Hank-Kuo/chat-app/internal/models"
+	"github.com/Hank-Kuo/chat-app/pkg/logger"
+	"github.com/Hank-Kuo/chat-app/pkg/tracer"
 
 	"github.com/pkg/errors"
 )

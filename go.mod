@@ -1,4 +1,4 @@
-module chat-app
+module github.com/Hank-Kuo/chat-app
 
 go 1.21.0
 

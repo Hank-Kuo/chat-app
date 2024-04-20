@@ -5,12 +5,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	messageSrv "chat-app/internal/api/service/message"
-	"chat-app/internal/dto"
-	httpMiddleware "chat-app/internal/middleware/http"
-	"chat-app/pkg/logger"
-	httpResponse "chat-app/pkg/response/http_response"
-	"chat-app/pkg/tracer"
+	messageSrv "github.com/Hank-Kuo/chat-app/internal/api/service/message"
+	"github.com/Hank-Kuo/chat-app/internal/dto"
+	httpMiddleware "github.com/Hank-Kuo/chat-app/internal/middleware/http"
+	"github.com/Hank-Kuo/chat-app/pkg/logger"
+	httpResponse "github.com/Hank-Kuo/chat-app/pkg/response/http_response"
+	"github.com/Hank-Kuo/chat-app/pkg/tracer"
 )
 
 type httpHandler struct {

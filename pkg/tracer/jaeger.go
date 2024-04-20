@@ -1,8 +1,8 @@
 package tracer
 
 import (
-	"chat-app/config"
-	"chat-app/pkg/version"
+	"github.com/Hank-Kuo/chat-app/config"
+	"github.com/Hank-Kuo/chat-app/pkg/version"
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/jaeger"

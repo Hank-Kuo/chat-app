@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 
-	"chat-app/pkg/customError/httpError"
-	"chat-app/pkg/logger"
+	"github.com/Hank-Kuo/chat-app/pkg/customError/httpError"
+	"github.com/Hank-Kuo/chat-app/pkg/logger"
 )
 
 type response struct {

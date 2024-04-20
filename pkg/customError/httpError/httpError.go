@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"chat-app/pkg/customError"
+	"github.com/Hank-Kuo/chat-app/pkg/customError"
 )
 
 type Err struct {

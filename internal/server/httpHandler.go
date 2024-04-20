@@ -4,16 +4,16 @@ import (
 	"net/http"
 	"time"
 
-	authDelivery "chat-app/internal/api/delivery/auth"
-	channelDelivery "chat-app/internal/api/delivery/channel"
-	messageDelivery "chat-app/internal/api/delivery/message"
-	authRepository "chat-app/internal/api/repository/auth"
-	channelRepository "chat-app/internal/api/repository/channel"
-	messageRepository "chat-app/internal/api/repository/message"
-	authService "chat-app/internal/api/service/auth"
-	channelService "chat-app/internal/api/service/channel"
-	messageService "chat-app/internal/api/service/message"
-	http_middleware "chat-app/internal/middleware/http"
+	authDelivery "github.com/Hank-Kuo/chat-app/internal/api/delivery/auth"
+	channelDelivery "github.com/Hank-Kuo/chat-app/internal/api/delivery/channel"
+	messageDelivery "github.com/Hank-Kuo/chat-app/internal/api/delivery/message"
+	authRepository "github.com/Hank-Kuo/chat-app/internal/api/repository/auth"
+	channelRepository "github.com/Hank-Kuo/chat-app/internal/api/repository/channel"
+	messageRepository "github.com/Hank-Kuo/chat-app/internal/api/repository/message"
+	authService "github.com/Hank-Kuo/chat-app/internal/api/service/auth"
+	channelService "github.com/Hank-Kuo/chat-app/internal/api/service/channel"
+	messageService "github.com/Hank-Kuo/chat-app/internal/api/service/message"
+	http_middleware "github.com/Hank-Kuo/chat-app/internal/middleware/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,7 +33,8 @@ func (s *Server) registerHttpHanders(engine *gin.Engine) {
 
 	messageRepo := messageRepository.NewRepo(s.session)
 	messageSrv := messageService.NewService(s.cfg, messageRepo, s.snowflakeNode, s.logger)
-	messageDelivery.NewHttpHandler(api, messageSrv, s.logger)
+	messageDelivery.NewHttpHandler(api, messageSrv, middleware, s.logger)
+	messageDelivery.NewWebSocketHandler(api, s.cfg, messageSrv, channelSrv, s.manager, middleware, s.logger)
 
 }
 
@@ -62,6 +63,8 @@ func (s *Server) newHttpServer() *http.Server {
 			s.logger.Fatalf("Error http ListenAndServe: %s", err)
 		}
 	}()
+
+	go s.manager.Start()
 
 	return httpServer
 }

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"chat-app/config"
-	"chat-app/pkg/customError"
+	"github.com/Hank-Kuo/chat-app/config"
+	"github.com/Hank-Kuo/chat-app/pkg/customError"
 
 	"github.com/golang-jwt/jwt/v5"
 )

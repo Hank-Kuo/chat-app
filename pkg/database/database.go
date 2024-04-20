@@ -11,7 +11,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/redis/go-redis/v9"
 
-	"chat-app/config"
+	"github.com/Hank-Kuo/chat-app/config"
 )
 
 func ConnectDB(cfg *config.DatabaseConfig) (*sqlx.DB, error) {

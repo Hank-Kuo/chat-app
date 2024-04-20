@@ -4,15 +4,14 @@ import (
 	"context"
 	"time"
 
-	"chat-app/config"
-	messageRepo "chat-app/internal/api/repository/message"
-	"chat-app/internal/dto"
-	"chat-app/internal/models"
-	"chat-app/pkg/logger"
-	"chat-app/pkg/tracer"
-	"chat-app/pkg/utils"
-
-	"chat-app/pkg/customError"
+	"github.com/Hank-Kuo/chat-app/config"
+	messageRepo "github.com/Hank-Kuo/chat-app/internal/api/repository/message"
+	"github.com/Hank-Kuo/chat-app/internal/dto"
+	"github.com/Hank-Kuo/chat-app/internal/models"
+	"github.com/Hank-Kuo/chat-app/pkg/customError"
+	"github.com/Hank-Kuo/chat-app/pkg/logger"
+	"github.com/Hank-Kuo/chat-app/pkg/tracer"
+	"github.com/Hank-Kuo/chat-app/pkg/utils"
 
 	"github.com/bwmarrin/snowflake"
 	"github.com/pkg/errors"

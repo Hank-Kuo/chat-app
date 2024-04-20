@@ -1,8 +1,8 @@
 package http
 
 import (
-	"chat-app/config"
-	"chat-app/pkg/logger"
+	"github.com/Hank-Kuo/chat-app/config"
+	"github.com/Hank-Kuo/chat-app/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 	"github.com/penglongli/gin-metrics/ginmetrics"

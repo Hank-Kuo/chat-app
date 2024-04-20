@@ -12,6 +12,7 @@ import (
 type Config struct {
 	Server    ServerConfig    `mapstructure:"server"`
 	Database  DatabaseConfig  `mapstructure:"database"`
+	Redis     RedisConfig     `mapstructure:"redis"`
 	Kafka     KafkaConfig     `mapstructure:"kafka"`
 	Cassandra CassandraConfig `mapstructure:"cassandra"`
 	Logger    LoggerConfig    `mapstructure:"logger"`
@@ -42,6 +43,12 @@ type DatabaseConfig struct {
 	Port            int    `mapstructure:"port"`
 	MaxConns        int    `mapstructure:"maxConns"`
 	MaxLiftimeConns int    `mapstructure:"maxLiftimeConns"`
+}
+
+type RedisConfig struct {
+	Host     string `mapstructure:"host"`
+	Password string `mapstructure:"password"`
+	Db       int    `mapstructure:"db"`
 }
 
 type LoggerConfig struct {
