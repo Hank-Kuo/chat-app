@@ -6,6 +6,7 @@ import (
 	"chat-app/config"
 	channelRepo "chat-app/internal/api/repository/channel"
 	"chat-app/internal/models"
+
 	// "chat-app/pkg/customError"
 	"chat-app/pkg/logger"
 	"chat-app/pkg/tracer"
@@ -18,6 +19,7 @@ type Service interface {
 	Create(ctx context.Context, channel *models.Channel) error
 	Join(ctx context.Context, userID string, channelID string) error
 	GetUserChannel(ctx context.Context, userID string) ([]*models.Channel, error)
+	GetUserByChannel(ctx context.Context, channelID string) ([]*models.UserToChannel, error)
 }
 
 type channelSrv struct {
@@ -88,6 +90,18 @@ func (srv *channelSrv) GetUserChannel(ctx context.Context, userID string) ([]*mo
 	if err != nil {
 		tracer.AddSpanError(span, err)
 		return nil, errors.Wrap(err, "ChannelService.GetUserChannel")
+	}
+	return channels, nil
+}
+
+func (srv *channelSrv) GetUserByChannel(ctx context.Context, channelID string) ([]*models.UserToChannel, error) {
+	c, span := tracer.NewSpan(ctx, "ChannelService.GetUserByChannel", nil)
+	defer span.End()
+
+	channels, err := srv.channelRepo.GetUserByChannel(c, channelID)
+	if err != nil {
+		tracer.AddSpanError(span, err)
+		return nil, errors.Wrap(err, "ChannelService.GetUserByChannel")
 	}
 	return channels, nil
 }

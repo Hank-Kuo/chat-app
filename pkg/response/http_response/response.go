@@ -2,6 +2,7 @@ package http_response
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 
 	"chat-app/pkg/customError/httpError"
 	"chat-app/pkg/logger"
@@ -42,4 +43,8 @@ func (r *response) ToJSON(c *gin.Context) {
 	} else {
 		c.JSON(r.StatusCode, r.Body)
 	}
+}
+
+func (r *response) ToWebSocketJSON(c *websocket.Conn) {
+	c.WriteJSON(r.Body)
 }

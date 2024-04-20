@@ -68,3 +68,22 @@ func (r *channelRepo) GetUserToChannel(ctx context.Context, userID string) ([]*m
 	return channels, nil
 
 }
+
+func (r *channelRepo) GetUserByChannel(ctx context.Context, channelID string) ([]*models.UserToChannel, error) {
+	ctx, span := tracer.NewSpan(ctx, "ChannelRepo.GetUserByChannel", nil)
+	defer span.End()
+
+	sqlQuery := `
+		SELECT *
+		FROM user_to_channel
+		WHERE channel_id = $1
+	`
+	channels := []*models.UserToChannel{}
+	if err := r.db.SelectContext(ctx, &channels, sqlQuery, channelID); err != nil {
+		tracer.AddSpanError(span, err)
+		return nil, errors.Wrap(err, "ChannelRepo.GetUserByChannel")
+	}
+
+	return channels, nil
+
+}

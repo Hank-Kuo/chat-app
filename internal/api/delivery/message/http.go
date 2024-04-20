@@ -1,11 +1,13 @@
 package message
 
 import (
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 
 	messageSrv "chat-app/internal/api/service/message"
 	"chat-app/internal/dto"
+	httpMiddleware "chat-app/internal/middleware/http"
 	"chat-app/pkg/logger"
 	httpResponse "chat-app/pkg/response/http_response"
 	"chat-app/pkg/tracer"
@@ -16,15 +18,16 @@ type httpHandler struct {
 	logger     logger.Logger
 }
 
-func NewHttpHandler(e *gin.RouterGroup, messageSrv messageSrv.Service, logger logger.Logger) {
+func NewHttpHandler(e *gin.RouterGroup, messageSrv messageSrv.Service, mid *httpMiddleware.Middleware, logger logger.Logger) {
 	handler := &httpHandler{
 		messageSrv: messageSrv,
 		logger:     logger,
 	}
+
 	e.GET("/message", handler.GetMessage)
 	e.GET("/reply", handler.GetReply)
-	e.POST("/message", handler.CreateMessage)
-	e.POST("/reply", handler.CreateReply)
+	// e.POST("/message", handler.CreateMessage)
+	// e.POST("/reply", handler.CreateReply)
 
 }
 

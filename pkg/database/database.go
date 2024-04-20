@@ -9,6 +9,7 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/redis/go-redis/v9"
 
 	"chat-app/config"
 )
@@ -53,4 +54,12 @@ func ConnectCassandra(cfg *config.CassandraConfig) (*gocql.Session, error) {
 
 	return c.CreateSession()
 
+}
+
+func ConnectRedis(cfg *config.RedisConfig) *redis.Client {
+	return redis.NewClient(&redis.Options{
+		Addr:     cfg.Host,
+		Password: cfg.Password,
+		DB:       cfg.Db,
+	})
 }

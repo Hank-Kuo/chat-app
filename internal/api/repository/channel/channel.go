@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"chat-app/internal/models"
+
 	"github.com/jmoiron/sqlx"
 )
 
@@ -12,6 +13,7 @@ type Repository interface {
 	Create(ctx context.Context, channel *models.Channel) (string, error)
 	CreateUserToChannel(ctx context.Context, uchannel *models.UserToChannel) error
 	GetUserToChannel(ctx context.Context, userID string) ([]*models.Channel, error)
+	GetUserByChannel(ctx context.Context, channelID string) ([]*models.UserToChannel, error)
 }
 
 type channelRepo struct {

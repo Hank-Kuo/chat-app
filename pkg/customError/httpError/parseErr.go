@@ -53,6 +53,10 @@ func ParseError(err error) *Err {
 		return &Err{
 			Status: http.StatusUnauthorized, Message: customError.ErrExpiredJWTError.Error(),
 		}
+	case errors.Is(err, customError.ErrBadRequest):
+		return &Err{
+			Status: http.StatusBadRequest, Message: customError.ErrBadRequest.Error(),
+		}
 
 	case strings.Contains(err.Error(), "Field validation"):
 		return parseValidatorError(err)

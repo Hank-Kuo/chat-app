@@ -13,6 +13,7 @@ import (
 	"chat-app/pkg/utils"
 
 	"chat-app/pkg/customError"
+
 	"github.com/bwmarrin/snowflake"
 	"github.com/pkg/errors"
 )
@@ -96,7 +97,6 @@ func (srv *messageSrv) GetMessage(ctx context.Context, m *dto.GetMessageQueryDto
 		if err != nil {
 			return nil, customError.ErrBadQueryParams
 		}
-
 		cursor = _cursor
 	}
 
@@ -151,4 +151,7 @@ func (srv *messageSrv) GetReply(ctx context.Context, r *dto.GetReplyQueryDto) (*
 		Replies:    reply,
 		NextCursor: nextCursor,
 	}, nil
+}
+
+func (srv *messageSrv) CreateMessage1(ctx context.Context, message *dto.CreateMessageReqDto) {
 }

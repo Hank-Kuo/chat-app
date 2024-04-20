@@ -31,6 +31,11 @@ cassandra:
   username: "user"
   password: "password"
 
+redis:
+  host: ${REDIS_HOST}
+  password: ${REDIS_PASSWORD}
+  db: ${REDIS_DB}
+
 logger:
   development: false
   disableCaller: false
