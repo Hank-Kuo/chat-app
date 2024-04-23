@@ -57,6 +57,7 @@ func (h *websocketHandler) Send(c *gin.Context) {
 	defer conn.Close()
 
 	if err != nil {
+		tracer.AddSpanError(span, err)
 		httpResponse.Fail(err, h.logger).ToWebSocketJSON(conn)
 		return
 	}
@@ -64,19 +65,22 @@ func (h *websocketHandler) Send(c *gin.Context) {
 	// Establish client and add client into manager
 	clientSocket := manager.NewClient(conn)
 	if err := clientSocket.ValidAuth(h.cfg); err != nil {
+		tracer.AddSpanError(span, err)
 		httpResponse.Fail(err, h.logger).ToWebSocketJSON(clientSocket.Socket)
 		return
 	}
 	h.manager.AddClient(clientSocket)
 	h.manager.Connect <- clientSocket
+	go BroadcastMessage(h.manager)
 
 	for {
 		messageType, message, err := clientSocket.Socket.ReadMessage()
 		if err != nil {
+			tracer.AddSpanError(span, err)
 			if messageType == -1 && websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure, websocket.CloseNoStatusReceived) {
 				h.manager.DisConnect <- clientSocket
+				return
 			}
-			return
 		}
 
 		var m manager.SendReq
@@ -87,36 +91,59 @@ func (h *websocketHandler) Send(c *gin.Context) {
 			if m.Action == "CreateMessage" {
 				var body dto.CreateMessageReqDto
 				if err := json.Unmarshal([]byte(m.Data), &body); err != nil {
+					tracer.AddSpanError(span, err)
 					httpResponse.Fail(customError.ErrBadRequest, h.logger).ToWebSocketJSON(clientSocket.Socket)
 				} else {
 					newMessage, err := h.messageSrv.CreateMessage(ctx, &body)
 					channels, err := h.channelSrv.GetUserByChannel(ctx, body.ChannelID)
+
 					if err != nil {
+						tracer.AddSpanError(span, err)
 						httpResponse.Fail(err, h.logger).ToWebSocketJSON(clientSocket.Socket)
 					} else {
 
-						onlineInstance := []string{}
-						offlineInstance := []string{}
 						// get group client ip
 						for _, ch := range channels {
+							// if ch.UserID != body.UserID {
 							instance, err := h.manager.GetInstacesByClients(ch.UserID)
-							if err != nil {
-								offlineInstance = append(offlineInstance, instance)
-								fmt.Println(err)
-							} else {
-								onlineInstance = append(onlineInstance, instance)
-							}
-						}
 
-						httpResponse.OK(http.StatusOK, "create message successfully", newMessage).ToWebSocketJSON(clientSocket.Socket)
-						h.manager.ToClientChan <- manager.ClientInfo{ClientId: "https://piehost.com", MessageId: "messageId", Msg: string(message)}
+							if err != nil {
+								// offline user
+								if err = h.messageSrv.MessageNotification(ctx, ch.UserID, newMessage); err != nil {
+									tracer.AddSpanError(span, err)
+								}
+							} else {
+								// online user
+								h.manager.ToClientChan <- manager.ToClientInfo{OriginClientId: body.UserID, ClientId: ch.UserID, InstanceId: instance, Data: newMessage}
+							}
+							// }
+						}
+						// httpResponse.OK(http.StatusOK, "create message successfully", newMessage).ToWebSocketJSON(clientSocket.Socket)
 					}
 				}
 			} else {
+				tracer.AddSpanError(span, err)
 				httpResponse.Fail(customError.ErrBadRequest, h.logger).ToWebSocketJSON(clientSocket.Socket)
 			}
 		}
-		// h.manager.ToClientChan <- manager.ClientInfo{ClientId: "https://piehost.com", MessageId: "messageId", Msg: string(message)}
 	}
-	// go clientSocket.WriteMessage()
+
+}
+
+func BroadcastMessage(m *manager.ClientManager) {
+	for {
+		select {
+		case clientInfo := <-m.ToClientChan:
+			if m.InstanceId == clientInfo.InstanceId {
+				// send to local
+				if conn, err := m.GetByClientId(clientInfo.ClientId); err == nil && conn != nil {
+					httpResponse.OK(http.StatusOK, "send message successfully", clientInfo.Data).ToWebSocketJSON(conn.Socket)
+				}
+			} else {
+				fmt.Println(clientInfo.InstanceId)
+				// send to other instance
+
+			}
+		}
+	}
 }
