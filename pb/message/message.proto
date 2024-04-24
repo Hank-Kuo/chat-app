@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package message;
+
+option go_package = "./pb/message";
+
+service UserService {
+  rpc ReceiveMessage(ReceiveMessageRequest) returns (ReceiveMessageResponse);
+  rpc ReceiveReply(ReceiveReplyRequest) returns (ReceiveReplyResponse);
+}
+
+
+message ReceiveMessageRequest {
+  string name = 1;
+  string email = 2;
+  string password = 3;
+}
+
+message ReceiveMessageResponse {
+}
+
+message ReceiveReplyRequest {
+    string name = 1;
+    string email = 2;
+    string password = 3;
+}
+  
+message ReceiveReplyResponse {
+}
+
