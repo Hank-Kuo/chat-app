@@ -8,15 +8,13 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import styles from "./global.css";
-import { AuthProvider } from "./context/authContext";
+import { MessageProvider } from "./context/messageContext";
 
 export const links: LinksFunction = () => [
   ...(styles ? [{ rel: "stylesheet", href: styles }] : []),
 ];
 
 export default function App() {
-
-
   return (
     <html lang="en">
       <head>
@@ -26,9 +24,9 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <AuthProvider>
+        <MessageProvider>
           <Outlet />
-        </AuthProvider>
+        </MessageProvider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

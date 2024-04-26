@@ -4,9 +4,10 @@ import { useLoaderData } from "@remix-run/react";
 import { loader } from "./index";
 import getHeader from "../../lib/utils/header";
 import { convertDate } from "../../lib/utils/date";
-import { ChannelType } from "../../apis/channel";
 import useInfiniteScroll from "../../lib/hook/useInfiniteScroll";
-import { getMessagesAPI, addMessageAPI, MessageType } from "../../apis/message";
+import { useMessage } from "../../context/messageContext";
+import { ChannelType } from "../../apis/channel";
+import { getMessagesAPI, MessageType } from "../../apis/message";
 import { S } from "./styles";
 
 interface MessageContainerProps {
@@ -23,6 +24,7 @@ export default function MessageContainer(props: MessageContainerProps) {
   const [showJoin, setShowJoin] = React.useState(true);
   const [hasMore, setHasMore] = React.useState(false);
   const [nextCursor, setNextCusror] = React.useState("");
+  const messageContext = useMessage();
 
   React.useEffect(() => {
     if (
@@ -66,25 +68,36 @@ export default function MessageContainer(props: MessageContainerProps) {
 
   const [lastElementRef, loading] = useInfiniteScroll(hasMore, fetchData);
 
+  React.useEffect(() => {
+    if (messageContext.isReady) {
+      if (messageContext.message["channel_id"] === props.selectChannel) {
+        setMessages((prev) => {
+          if (prev.length > 0) {
+            if (messageContext.message.message_id >= prev[0]["message_id"]) {
+              return [messageContext.message, ...prev];
+            }
+          }
+          return [messageContext.message, ...prev];
+        });
+      }
+    }
+  }, [messageContext.message]);
+
   // submit user text
   const handleClick = () => {
-    addMessageAPI(
-      {
-        channel_id: props.selectChannel,
-        user_id: userInfo.id,
-        username: userInfo.name,
-        content: text,
-      },
-      new Headers()
-    ).then((v) => {
-      if (v["status"] === "success") {
-        const message: MessageType = v["data"];
-        setMessages((prev) => {
-          return [message, ...prev];
-        });
-        setText("");
-      }
-    });
+    if (messageContext.isReady) {
+      let data = JSON.stringify({
+        action: "CreateMessage",
+        data: {
+          channel_id: props.selectChannel,
+          user_id: userInfo.id,
+          username: userInfo.name,
+          content: text,
+        },
+      });
+      messageContext.wsClient?.send(data);
+      setText("");
+    }
   };
 
   // show reply modal

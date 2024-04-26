@@ -14,6 +14,7 @@ import ReplyModal from "./replyModal";
 import MessageContainer from "./messageContainer";
 import getHeader from "../../lib/utils/header";
 import { getSession, commitSession } from "../../lib/utils/session";
+import { useMessage } from "../../context/messageContext";
 import {
   getAllChannelsAPI,
   getUserChannelsAPI,
@@ -132,11 +133,16 @@ export async function action({ request }: ActionFunctionArgs) {
 }
 
 export default function Index() {
-  const { channels, userChannels } = useLoaderData<typeof loader>();
+  const { userInfo, channels, userChannels } = useLoaderData<typeof loader>();
   const [selectChannel, setSelectChannel] = React.useState("");
   const [showAddChannel, setShowAddChannel] = React.useState(false);
   const [selectMessage, setSelectMessage] = React.useState(-1);
   const [showReply, setShowReply] = React.useState(false);
+  const messageContext = useMessage();
+
+  React.useEffect(() => {
+    messageContext.setUserInfo(userInfo);
+  }, []);
 
   return (
     <S.Wrapper>
@@ -169,6 +175,7 @@ export default function Index() {
       <ReplyModal
         show={showReply}
         setShow={setShowReply}
+        selectChannel={selectChannel}
         selectMessage={selectMessage}
         setSelectMessage={setSelectMessage}
       />

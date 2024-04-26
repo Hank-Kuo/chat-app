@@ -6,13 +6,14 @@ import getHeader from "../../lib/utils/header";
 import { convertDate } from "../../lib/utils/date";
 import useInfiniteScroll from "../../lib/hook/useInfiniteScroll";
 import useClickOutside from "../../lib/hook/useClickOutside";
-
-import { getRepliesAPI, addReplyAPI, ReplyType } from "../../apis/message";
+import { useMessage } from "../../context/messageContext";
+import { getRepliesAPI, ReplyType } from "../../apis/message";
 import { S, M } from "./styles";
 
 interface ReplyModalProps {
   show: boolean;
   setShow: React.Dispatch<React.SetStateAction<boolean>>;
+  selectChannel: string;
   selectMessage: number;
   setSelectMessage: React.Dispatch<React.SetStateAction<number>>;
 }
@@ -22,9 +23,9 @@ const ReplyModal = (props: ReplyModalProps) => {
   const modalRef = React.useRef(null);
   const [text, setText] = React.useState("");
   const [replies, setReplies] = React.useState<ReplyType[]>([]);
-
-  const [hasMore, setHasMore] = React.useState(true);
+  const [hasMore, setHasMore] = React.useState(false);
   const [nextCursor, setNextCusror] = React.useState("");
+  const messageContext = useMessage();
 
   const fetchData = () => {
     getRepliesAPI(
@@ -66,7 +67,38 @@ const ReplyModal = (props: ReplyModalProps) => {
     props.setSelectMessage(-1);
   });
 
+  React.useEffect(() => {
+    if (messageContext.isReady) {
+      if (messageContext.reply["message_id"] === props.selectMessage) {
+        setReplies((prev) => {
+          if (prev.length > 0) {
+            if (messageContext.reply["reply_id"] >= prev[0]["reply_id"]) {
+              return [messageContext.reply, ...prev];
+            }
+          }
+          return [messageContext.reply, ...prev];
+        });
+      }
+    }
+  }, [messageContext.reply]);
+
+  // submit user text
   const handleClick = () => {
+    if (messageContext.isReady) {
+      let data = JSON.stringify({
+        action: "CreateReply",
+        data: {
+          channel_id: props.selectChannel,
+          message_id: props.selectMessage,
+          user_id: userInfo.id,
+          username: userInfo.name,
+          content: text,
+        },
+      });
+      messageContext.wsClient?.send(data);
+      setText("");
+    }
+    /*
     addReplyAPI(
       {
         message_id: props.selectMessage,
@@ -85,6 +117,7 @@ const ReplyModal = (props: ReplyModalProps) => {
         setText("");
       }
     });
+    */
   };
 
   return (
@@ -98,6 +131,7 @@ const ReplyModal = (props: ReplyModalProps) => {
                 const createDate = convertDate(v.created_at);
                 return (
                   <S.Item
+                    id={`${v.reply_id}`}
                     key={`${v.reply_id}`}
                     ref={
                       i === replies.length - 1
