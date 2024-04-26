@@ -1,4 +1,5 @@
 CREATE TABLE IF NOT EXISTS reply (
+    channel_id UUID,
     message_id BIGINT,
     reply_id BIGINT,
     content TEXT,
