@@ -41,17 +41,19 @@ func ValidJwt(cfg *config.Config, tokenStr string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenStr, &Claims{}, func(t *jwt.Token) (interface{}, error) {
 		return []byte(cfg.Server.AccessJwtSecret), nil
 	})
-
-	switch {
-	case token.Valid:
-		if claims, ok := token.Claims.(*Claims); ok {
-			return claims, nil
+	if err != nil {
+		switch {
+		case errors.Is(err, jwt.ErrTokenMalformed) || errors.Is(err, jwt.ErrTokenSignatureInvalid):
+			return nil, customError.ErrInvalidJWTClaims
+		case errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet):
+			return nil, customError.ErrExpiredJWTError
 		}
-	case errors.Is(err, jwt.ErrTokenMalformed) || errors.Is(err, jwt.ErrTokenSignatureInvalid):
 		return nil, customError.ErrInvalidJWTClaims
-	case errors.Is(err, jwt.ErrTokenExpired) || errors.Is(err, jwt.ErrTokenNotValidYet):
-		return nil, customError.ErrExpiredJWTError
 	}
 
+	if claims, ok := token.Claims.(*Claims); ok {
+		return claims, nil
+	}
 	return nil, customError.ErrInvalidJWTClaims
+
 }
