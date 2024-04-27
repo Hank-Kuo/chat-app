@@ -4,6 +4,8 @@ server:
   grpcHost: ${GRPC_HOST}
   grpcPort: ${GRPC_PORT}
   debug: ${DEBUG}
+  hostname: ${HOSTNAME}
+  instanceIP: ${INSTANCE_IP}
   readTimeout: 5
   writeTimeout: 5
   contextTimeout: 5
@@ -63,7 +65,9 @@ kafka:
   brokers: ${KAFKA_BROKER}
   groupID: "customer-1"
   topics:
-    user_email: 
-      name: user_email
+    - name: message_topic
+      partitions: 1
+      replicationFactor: 1
+    - name: reply_topic
       partitions: 1
       replicationFactor: 1

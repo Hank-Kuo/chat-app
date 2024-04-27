@@ -8,6 +8,7 @@ import (
 	"github.com/Hank-Kuo/chat-app/config"
 	"github.com/Hank-Kuo/chat-app/internal/server"
 	"github.com/Hank-Kuo/chat-app/pkg/database"
+	"github.com/Hank-Kuo/chat-app/pkg/kafka"
 	"github.com/Hank-Kuo/chat-app/pkg/logger"
 	"github.com/Hank-Kuo/chat-app/pkg/manager"
 	"github.com/Hank-Kuo/chat-app/pkg/tracer"
@@ -46,12 +47,6 @@ func main() {
 		}
 	}()
 
-	// kakfaWriter, err := kafka.NewWriter(cfg.Kafka, "user_email")
-	// if err != nil {
-	// 	apiLogger.Fatal("Can't connect with kafka", err)
-	// }
-	// defer kakfaWriter.Close()
-
 	cassandraSess, err := database.ConnectCassandra(&cfg.Cassandra)
 
 	if err != nil {
@@ -60,16 +55,28 @@ func main() {
 
 	defer cassandraSess.Close()
 
-	snowflakeNode, err := snowflake.NewNode(1)
+	snowflakeNode, err := snowflake.NewNode(cfg.Server.InstanceID)
 	if err != nil {
 		panic(fmt.Errorf("load snowflake: %v", err))
 	}
+	kafkaMessageWriter, err := kafka.NewWriter(cfg.Kafka, "message_topic")
+	if err != nil {
+		panic(fmt.Errorf("Can't connect with messsage kafka: %v", err))
+	}
+	defer kafkaMessageWriter.Close()
+
+	kafkaReplyWriter, err := kafka.NewWriter(cfg.Kafka, "reply_topic")
+	if err != nil {
+		panic(fmt.Errorf("Can't connect with reply kafka: %v", err))
+
+	}
+	defer kafkaReplyWriter.Close()
 
 	rdb := database.ConnectRedis(&cfg.Redis)
 
-	manager := manager.NewClientManager(rdb)
+	manager := manager.NewClientManager(rdb, cfg.Server.InstanceIP)
 
 	// init server
-	srv := server.NewServer(cfg, db, cassandraSess, rdb, manager, snowflakeNode, apiLogger)
+	srv := server.NewServer(cfg, db, cassandraSess, rdb, manager, snowflakeNode, kafkaMessageWriter, kafkaReplyWriter, apiLogger)
 	srv.Run()
 }

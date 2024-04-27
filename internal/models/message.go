@@ -13,6 +13,7 @@ type Message struct {
 }
 
 type Reply struct {
+	ChannelID string    `json:"channel_id"`
 	MessageID int64     `json:"message_id"`
 	ReplyID   int64     `json:"reply_id"`
 	Content   string    `json:"content"`

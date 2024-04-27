@@ -9,15 +9,16 @@ import (
 )
 
 func NewWriter(cfg config.KafkaConfig, topicName string) (*kafka.Writer, error) {
-	topic, ok := cfg.Topics[topicName]
-
-	if !ok {
-		return nil, errors.New("not found topic")
+	for _, t := range cfg.Topics {
+		if t.Name == topicName {
+			return &kafka.Writer{
+				Addr:     kafka.TCP(cfg.Brokers...),
+				Topic:    t.Name,
+				Balancer: &kafka.LeastBytes{},
+			}, nil
+		}
 	}
 
-	return &kafka.Writer{
-		Addr:     kafka.TCP(cfg.Brokers...),
-		Topic:    topic.Name,
-		Balancer: &kafka.LeastBytes{},
-	}, nil
+	return nil, errors.New("not found topic")
+
 }

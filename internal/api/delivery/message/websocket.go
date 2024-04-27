@@ -64,11 +64,13 @@ func (h *websocketHandler) Send(c *gin.Context) {
 
 	// Establish client and add client into manager
 	clientSocket := manager.NewClient(conn)
+
 	if err := clientSocket.ValidAuth(h.cfg); err != nil {
 		tracer.AddSpanError(span, err)
 		httpResponse.Fail(err, h.logger).ToWebSocketJSON(clientSocket.Socket)
 		return
 	}
+
 	h.manager.AddClient(clientSocket)
 	h.manager.Connect <- clientSocket
 	go BroadcastMessage(h.manager)
@@ -76,8 +78,8 @@ func (h *websocketHandler) Send(c *gin.Context) {
 	for {
 		messageType, message, err := clientSocket.Socket.ReadMessage()
 		if err != nil {
-			tracer.AddSpanError(span, err)
 			if messageType == -1 && websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure, websocket.CloseNoStatusReceived) {
+				tracer.AddSpanError(span, err)
 				h.manager.DisConnect <- clientSocket
 				return
 			}
@@ -95,30 +97,68 @@ func (h *websocketHandler) Send(c *gin.Context) {
 					httpResponse.Fail(customError.ErrBadRequest, h.logger).ToWebSocketJSON(clientSocket.Socket)
 				} else {
 					newMessage, err := h.messageSrv.CreateMessage(ctx, &body)
-					channels, err := h.channelSrv.GetUserByChannel(ctx, body.ChannelID)
 
 					if err != nil {
 						tracer.AddSpanError(span, err)
 						httpResponse.Fail(err, h.logger).ToWebSocketJSON(clientSocket.Socket)
 					} else {
 
-						// get group client ip
-						for _, ch := range channels {
-							// if ch.UserID != body.UserID {
-							instance, err := h.manager.GetInstacesByClients(ch.UserID)
+						httpResponse.OK(http.StatusOK, "create message successfully", newMessage).ToWebSocketJSON(clientSocket.Socket)
 
-							if err != nil {
-								// offline user
-								if err = h.messageSrv.MessageNotification(ctx, ch.UserID, newMessage); err != nil {
-									tracer.AddSpanError(span, err)
+						if channels, err := h.channelSrv.GetUserByChannel(ctx, body.ChannelID); err == nil {
+							// get group client ip
+							for _, ch := range channels {
+								if ch.UserID != body.UserID {
+									instance, err := h.manager.GetInstacesByClients(ch.UserID)
+									if err != nil {
+										// offline user
+										if err = h.messageSrv.MessageNotification(ctx, ch.UserID, newMessage); err != nil {
+											tracer.AddSpanError(span, err)
+										}
+									} else {
+										// online user
+										h.manager.ToClientChan <- manager.ToClientInfo{OriginClientId: body.UserID, ClientId: ch.UserID, InstanceId: instance, Data: newMessage}
+									}
 								}
-							} else {
-								// online user
-								h.manager.ToClientChan <- manager.ToClientInfo{OriginClientId: body.UserID, ClientId: ch.UserID, InstanceId: instance, Data: newMessage}
 							}
-							// }
 						}
-						// httpResponse.OK(http.StatusOK, "create message successfully", newMessage).ToWebSocketJSON(clientSocket.Socket)
+
+					}
+				}
+			} else if m.Action == "CreateReply" {
+				var body dto.CreateReplyReqDto
+				if err := json.Unmarshal([]byte(m.Data), &body); err != nil {
+					tracer.AddSpanError(span, err)
+					httpResponse.Fail(customError.ErrBadRequest, h.logger).ToWebSocketJSON(clientSocket.Socket)
+				} else {
+
+					newReply, err := h.messageSrv.CreateReply(ctx, &body)
+
+					if err != nil {
+						tracer.AddSpanError(span, err)
+						httpResponse.Fail(err, h.logger).ToWebSocketJSON(clientSocket.Socket)
+					} else {
+						httpResponse.OK(http.StatusOK, "create reply successfully", newReply).ToWebSocketJSON(clientSocket.Socket)
+
+						if channels, err := h.channelSrv.GetUserByChannel(ctx, body.ChannelID); err == nil {
+							for _, ch := range channels {
+								if ch.UserID != body.UserID {
+									instance, err := h.manager.GetInstacesByClients(ch.UserID)
+									if err != nil {
+										// offline user
+										fmt.Println(ch.UserID)
+										if err = h.messageSrv.ReplyNotification(ctx, ch.UserID, newReply); err != nil {
+											tracer.AddSpanError(span, err)
+										}
+									} else {
+										// online user
+										h.manager.ToClientChan <- manager.ToClientInfo{OriginClientId: body.UserID, ClientId: ch.UserID, InstanceId: instance, Data: newReply}
+									}
+								}
+
+							}
+						}
+
 					}
 				}
 			} else {

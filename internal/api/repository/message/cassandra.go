@@ -31,11 +31,11 @@ func (r *messageRepo) CreateReply(ctx context.Context, reply *models.Reply) erro
 	ctx, span := tracer.NewSpan(ctx, "MessageRepo.CreateReply", nil)
 	defer span.End()
 
-	sqlQuery := `INSERT INTO reply (message_id, reply_id,
+	sqlQuery := `INSERT INTO reply (channel_id, message_id, reply_id,
 							content, user_id, username, created_at) 
-					VALUES (?, ?, ?, ?, ?, ?)`
+					VALUES (?, ?, ?, ?, ?, ?, ?)`
 
-	err := r.session.Query(sqlQuery, reply.MessageID, reply.ReplyID,
+	err := r.session.Query(sqlQuery, reply.ChannelID, reply.MessageID, reply.ReplyID,
 		reply.Content, reply.UserID, reply.Username, reply.CreatedAt).WithContext(ctx).Exec()
 
 	if err != nil {
@@ -87,7 +87,7 @@ func (r *messageRepo) GetMessage(ctx context.Context, channelID string, cursor i
 }
 
 func (r *messageRepo) GetReply(ctx context.Context, messageID int64, cursor int64, limit int) ([]*models.Reply, error) {
-	ctx, span := tracer.NewSpan(ctx, "MessageRepo.GetReplyet", nil)
+	ctx, span := tracer.NewSpan(ctx, "MessageRepo.GetReply", nil)
 	defer span.End()
 
 	var filterQuery string
@@ -102,22 +102,16 @@ func (r *messageRepo) GetReply(ctx context.Context, messageID int64, cursor int6
 
 	sqlQuery := fmt.Sprintf(`
 		SELECT message_id, reply_id,
-		content, user_id, username, created_at 
+		content, channel_id, user_id, username, created_at 
 		FROM reply WHERE message_id = ? %s LIMIT %d ALLOW FILTERING`, filterQuery, limit)
 
-	// sqlQuery := `
-	// 	SELECT message_id, reply_id,
-	// 	content, user_id, username, created_at
-	// 	FROM reply WHERE message_id = ? LIMIT 10 ALLOW FILTERING
-	// `
-
 	scanner := r.session.Query(sqlQuery, args...).WithContext(ctx).Iter().Scanner()
-	// scanner := r.session.Query(sqlQuery, messageID).WithContext(ctx).Iter().Scanner()
+
 	replies := []*models.Reply{}
 
 	for scanner.Next() {
 		var reply models.Reply
-		err := scanner.Scan(&reply.MessageID, &reply.ReplyID, &reply.Content, &reply.UserID, &reply.Username, &reply.CreatedAt)
+		err := scanner.Scan(&reply.MessageID, &reply.ReplyID, &reply.Content, &reply.ChannelID, &reply.UserID, &reply.Username, &reply.CreatedAt)
 		if err != nil {
 			tracer.AddSpanError(span, err)
 			return nil, errors.Wrap(err, "MessageRepo.GetReply")

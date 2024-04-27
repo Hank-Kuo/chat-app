@@ -12,6 +12,7 @@ type CreateMessageReqDto struct {
 }
 
 type CreateReplyReqDto struct {
+	ChannelID string `json:"channel_id" binding:"required"`
 	MessageID int64  `json:"message_id" binding:"required"`
 	UserID    string `json:"user_id" binding:"required"`
 	Username  string `json:"username" binding:"required"`

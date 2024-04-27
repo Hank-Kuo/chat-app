@@ -3,6 +3,8 @@ package config
 import (
 	"os"
 	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -32,6 +34,9 @@ type ServerConfig struct {
 	AccessJwtSecret     string `mapstructure:"accessJwtSecret"`
 	AccessJwtExpireTime int    `mapstructure:"AccessJwtExpireTime"`
 	Location            *time.Location
+	Hostname            string `mapstructure:"hostname"`
+	InstanceID          int64
+	InstanceIP          string `mapstructure:"instanceIP"`
 }
 
 type DatabaseConfig struct {
@@ -80,9 +85,9 @@ type topic struct {
 }
 
 type KafkaConfig struct {
-	Brokers []string         `mapstructure:"brokers"`
-	Topics  map[string]topic `mapstructure:"topics"`
-	GroupID string           `mapstructure:"groupID"`
+	Brokers []string `mapstructure:"brokers"`
+	Topics  []topic  `mapstructure:"topics"`
+	GroupID string   `mapstructure:"groupID"`
 }
 
 type JaegerConfig struct {
@@ -120,6 +125,13 @@ func GetConf() (*Config, error) {
 		return nil, err
 	}
 	config.Server.Location = loc
+
+	hostnameArr := strings.Split(config.Server.Hostname, "-")
+	InstanceID, err := strconv.Atoi(hostnameArr[len(hostnameArr)-1])
+	if err != nil {
+		InstanceID = 1
+	}
+	config.Server.InstanceID = int64(InstanceID)
 
 	return &config, nil
 }

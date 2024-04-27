@@ -22,6 +22,19 @@ func (r *channelRepo) Get(ctx context.Context) ([]*models.Channel, error) {
 	return channels, nil
 }
 
+func (r *channelRepo) GetByID(ctx context.Context, channelID string) (*models.Channel, error) {
+	ctx, span := tracer.NewSpan(ctx, "ChannelRepo.GetByID", nil)
+	defer span.End()
+
+	channel := models.Channel{}
+	if err := r.db.GetContext(ctx, &channel, "SELECT * FROM channel WHERE id = $1", channelID); err != nil {
+		tracer.AddSpanError(span, err)
+		return nil, errors.Wrap(err, "ChannelRepo.GetByID")
+	}
+
+	return &channel, nil
+}
+
 func (r *channelRepo) Create(ctx context.Context, channel *models.Channel) (string, error) {
 	ctx, span := tracer.NewSpan(ctx, "ChannelRepo.Create", nil)
 	defer span.End()
@@ -34,6 +47,7 @@ func (r *channelRepo) Create(ctx context.Context, channel *models.Channel) (stri
 		tracer.AddSpanError(span, err)
 		return "", errors.Wrap(err, "ChannelRepo.Create")
 	}
+
 	return channelID, nil
 }
 
@@ -48,8 +62,10 @@ func (r *channelRepo) CreateUserToChannel(ctx context.Context, uchannel *models.
 		tracer.AddSpanError(span, err)
 		return errors.Wrap(err, "ChannelRepo.CreateUserToChannel")
 	}
+
 	return nil
 }
+
 func (r *channelRepo) GetUserToChannel(ctx context.Context, userID string) ([]*models.Channel, error) {
 	ctx, span := tracer.NewSpan(ctx, "ChannelRepo.GetUserToChannel", nil)
 	defer span.End()

@@ -54,7 +54,7 @@ func (m *ClientManager) AddClient(client *Client) error {
 		return err
 	}
 
-	m.Rdb.Set(m.Ctx, "bac09a89-df1a-4644-ba2f-89f4da8d0456", "localhost2", 0)
+	// m.Rdb.Set(m.Ctx, "bac09a89-df1a-4644-ba2f-89f4da8d0456", "localhost2", 0)
 	m.ClientIdMap[client.ClientId] = client
 	return nil
 }

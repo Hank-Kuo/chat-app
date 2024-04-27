@@ -19,6 +19,7 @@ import (
 )
 
 func (s *Server) registerHttpHanders(engine *gin.Engine) {
+
 	middleware := http_middleware.NewMiddlewares(s.cfg, s.logger)
 
 	api := engine.Group("/api")
@@ -27,11 +28,11 @@ func (s *Server) registerHttpHanders(engine *gin.Engine) {
 	authSrv := authService.NewService(s.cfg, authRepo, s.logger)
 	authDelivery.NewHttpHandler(api, authSrv, s.logger)
 
-	channelRepo := channelRepository.NewRepo(s.db)
+	channelRepo := channelRepository.NewRepo(s.db, s.rdb)
 	channelSrv := channelService.NewService(s.cfg, channelRepo, s.logger)
 	channelDelivery.NewHttpHandler(api, channelSrv, middleware, s.logger)
 
-	messageRepo := messageRepository.NewRepo(s.session)
+	messageRepo := messageRepository.NewRepo(s.session, s.kafkaMessageWriter, s.kafkaReplyWriter)
 	messageSrv := messageService.NewService(s.cfg, messageRepo, s.snowflakeNode, s.logger)
 	messageDelivery.NewHttpHandler(api, messageSrv, middleware, s.logger)
 	messageDelivery.NewWebSocketHandler(api, s.cfg, messageSrv, channelSrv, s.manager, middleware, s.logger)

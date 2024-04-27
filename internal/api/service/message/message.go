@@ -24,6 +24,8 @@ type Service interface {
 	CreateReply(ctx context.Context, reply *dto.CreateReplyReqDto) (*models.Reply, error)
 	GetMessage(ctx context.Context, m *dto.GetMessageQueryDto) (*dto.GetMessageResDto, error)
 	GetReply(ctx context.Context, r *dto.GetReplyQueryDto) (*dto.GetReplyResDto, error)
+	MessageNotification(ctx context.Context, userID string, message *models.Message) error
+	ReplyNotification(ctx context.Context, userID string, reply *models.Reply) error
 }
 
 type messageSrv struct {
@@ -70,6 +72,7 @@ func (srv *messageSrv) CreateReply(ctx context.Context, reply *dto.CreateReplyRe
 
 	id := srv.snowflake.Generate().Int64()
 	r := &models.Reply{
+		ChannelID: reply.ChannelID,
 		MessageID: reply.MessageID,
 		ReplyID:   id,
 		Content:   reply.Content,
@@ -130,6 +133,7 @@ func (srv *messageSrv) GetReply(ctx context.Context, r *dto.GetReplyQueryDto) (*
 		if err != nil {
 			return nil, customError.ErrBadQueryParams
 		}
+
 		cursor = _cursor
 	}
 
@@ -152,5 +156,25 @@ func (srv *messageSrv) GetReply(ctx context.Context, r *dto.GetReplyQueryDto) (*
 	}, nil
 }
 
-func (srv *messageSrv) CreateMessage1(ctx context.Context, message *dto.CreateMessageReqDto) {
+func (srv *messageSrv) MessageNotification(ctx context.Context, userID string, message *models.Message) error {
+	c, span := tracer.NewSpan(ctx, "MessageService.MessageNotification", nil)
+	defer span.End()
+
+	if err := srv.messageRepo.PublishMessage(c, userID, message); err != nil {
+		tracer.AddSpanError(span, err)
+		return errors.Wrap(err, "MessageService.MessageNotification")
+	}
+
+	return nil
+}
+
+func (srv *messageSrv) ReplyNotification(ctx context.Context, userID string, reply *models.Reply) error {
+	c, span := tracer.NewSpan(ctx, "MessageService.ReplyNotification", nil)
+	defer span.End()
+
+	if err := srv.messageRepo.PublishReply(c, userID, reply); err != nil {
+		tracer.AddSpanError(span, err)
+		return errors.Wrap(err, "MessageService.ReplyNotification")
+	}
+	return nil
 }

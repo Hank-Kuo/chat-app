@@ -26,7 +26,7 @@ func NewHttpHandler(e *gin.RouterGroup, channelSrv channelSrv.Service, mid *http
 	}
 
 	e.GET("/channel", mid.AuthMiddleware(), handler.Get)
-	e.GET("/user/channel", mid.AuthMiddleware(), handler.GetUserChannel)
+	e.GET("/user/channel", mid.AuthMiddleware(), handler.GetChannelByUser)
 	e.POST("/channel", mid.AuthMiddleware(), handler.Create)
 	e.POST("/channel/join", mid.AuthMiddleware(), handler.Join)
 }
@@ -91,15 +91,15 @@ func (h *httpHandler) Join(c *gin.Context) {
 	httpResponse.OK(http.StatusOK, "user join channel successfully", nil).ToJSON(c)
 }
 
-func (h *httpHandler) GetUserChannel(c *gin.Context) {
+func (h *httpHandler) GetChannelByUser(c *gin.Context) {
 
 	userID, _ := c.Get("userID")
 
 	ctx := c.Request.Context()
-	ctx, span := tracer.NewSpan(ctx, "ChannelHttpHandler.GetUserChannel", nil)
+	ctx, span := tracer.NewSpan(ctx, "ChannelHttpHandler.GetChannelByUser", nil)
 	defer span.End()
 
-	channels, err := h.channelSrv.GetUserChannel(ctx, fmt.Sprintf("%v", userID))
+	channels, err := h.channelSrv.GetChannelByUser(ctx, fmt.Sprintf("%v", userID))
 	if err != nil {
 		tracer.AddSpanError(span, err)
 		httpResponse.Fail(err, h.logger).ToJSON(c)
