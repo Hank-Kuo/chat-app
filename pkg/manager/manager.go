@@ -5,11 +5,14 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/Hank-Kuo/chat-app/config"
+
 	"github.com/redis/go-redis/v9"
 )
 
 type ClientManager struct {
 	Ctx             context.Context
+	cfg             *config.Config
 	InstanceId      string
 	ClientIdMap     map[string]*Client
 	ClientIdMapLock sync.RWMutex
@@ -19,10 +22,11 @@ type ClientManager struct {
 	ToClientChan    chan ToClientInfo
 }
 
-func NewClientManager(rdb *redis.Client, instanceId string) *ClientManager {
+func NewClientManager(rdb *redis.Client, cfg *config.Config) *ClientManager {
 	return &ClientManager{
 		Ctx:          context.Background(),
-		InstanceId:   instanceId,
+		cfg:          cfg,
+		InstanceId:   cfg.Server.InstanceIP,
 		ClientIdMap:  make(map[string]*Client),
 		Connect:      make(chan *Client, 10000),
 		DisConnect:   make(chan *Client, 10000),
@@ -78,12 +82,6 @@ func (m *ClientManager) Count() int {
 	defer m.ClientIdMapLock.RUnlock()
 	return len(m.ClientIdMap)
 }
-
-// func (manager *ClientManager) GetGroupClientList(groupKey string) []string {
-// 	manager.GroupLock.RLock()
-// 	defer manager.GroupLock.RUnlock()
-// 	return manager.Groups[groupKey]
-// }
 
 func (m *ClientManager) GetByClientId(clientId string) (*Client, error) {
 	m.ClientIdMapLock.RLock()

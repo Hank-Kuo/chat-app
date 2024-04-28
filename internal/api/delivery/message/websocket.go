@@ -145,8 +145,7 @@ func (h *websocketHandler) Send(c *gin.Context) {
 								if ch.UserID != body.UserID {
 									instance, err := h.manager.GetInstacesByClients(ch.UserID)
 									if err != nil {
-										// offline user
-										fmt.Println(ch.UserID)
+										// offline user˝
 										if err = h.messageSrv.ReplyNotification(ctx, ch.UserID, newReply); err != nil {
 											tracer.AddSpanError(span, err)
 										}
@@ -180,9 +179,32 @@ func BroadcastMessage(m *manager.ClientManager) {
 					httpResponse.OK(http.StatusOK, "send message successfully", clientInfo.Data).ToWebSocketJSON(conn.Socket)
 				}
 			} else {
-				fmt.Println(clientInfo.InstanceId)
-				// send to other instance
+				/*
+					queryHost := fmt.Sprintf(`%s:%s`, clientInfo.InstanceId, m.cfg.Server.GrpcPort)
+					if conn, err := grpc.Dial(queryHost, grpc.WithInsecure()); err == nil {
 
+					}
+
+					c := messagePb.NewMessageServiceClient(conn)
+
+					if _, err = c.MessageReceived(context.Background(), &messagePb.ReceiveMessageRequest{
+						OriginClientID: "bac09a89-df1a-4644-ba2f-89f4da8d0456",
+						ClientId:       "257e4caf-fb4b-43a1-a4b3-cca94f583bd5",
+						InstanceId:     "127.0.0.1",
+						Message: &messagePb.ReceiveMessageRequest_Message{
+							ChannelId: "b37c4896-70e5-4a94-bbab-7de13e5e41ff",
+							MessageId: 1984282932957937700,
+							Content:   "send from other",
+							UserId:    "bac09a89-df1a-4644-ba2f-89f4da8d0456",
+							Username:  "other",
+							CreatedAt: "2023-12-01T05:52:17.581988Z",
+						},
+					}); err != nil {
+
+					}
+				*/
+				// send to other instance
+				fmt.Println(clientInfo.InstanceId)
 			}
 		}
 	}

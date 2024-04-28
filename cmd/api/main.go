@@ -74,7 +74,7 @@ func main() {
 
 	rdb := database.ConnectRedis(&cfg.Redis)
 
-	manager := manager.NewClientManager(rdb, cfg.Server.InstanceIP)
+	manager := manager.NewClientManager(rdb, cfg)
 
 	// init server
 	srv := server.NewServer(cfg, db, cassandraSess, rdb, manager, snowflakeNode, kafkaMessageWriter, kafkaReplyWriter, apiLogger)

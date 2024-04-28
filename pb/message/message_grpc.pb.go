@@ -18,120 +18,120 @@ import (
 // Requires gRPC-Go v1.32.0 or later.
 const _ = grpc.SupportPackageIsVersion7
 
-// UserServiceClient is the client API for UserService service.
+// MessageServiceClient is the client API for MessageService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type UserServiceClient interface {
-	ReceiveMessage(ctx context.Context, in *ReceiveMessageRequest, opts ...grpc.CallOption) (*ReceiveMessageResponse, error)
-	ReceiveReply(ctx context.Context, in *ReceiveReplyRequest, opts ...grpc.CallOption) (*ReceiveReplyResponse, error)
+type MessageServiceClient interface {
+	MessageReceived(ctx context.Context, in *ReceiveMessageRequest, opts ...grpc.CallOption) (*ReceiveMessageResponse, error)
+	ReplyReceived(ctx context.Context, in *ReceiveReplyRequest, opts ...grpc.CallOption) (*ReceiveReplyResponse, error)
 }
 
-type userServiceClient struct {
+type messageServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewUserServiceClient(cc grpc.ClientConnInterface) UserServiceClient {
-	return &userServiceClient{cc}
+func NewMessageServiceClient(cc grpc.ClientConnInterface) MessageServiceClient {
+	return &messageServiceClient{cc}
 }
 
-func (c *userServiceClient) ReceiveMessage(ctx context.Context, in *ReceiveMessageRequest, opts ...grpc.CallOption) (*ReceiveMessageResponse, error) {
+func (c *messageServiceClient) MessageReceived(ctx context.Context, in *ReceiveMessageRequest, opts ...grpc.CallOption) (*ReceiveMessageResponse, error) {
 	out := new(ReceiveMessageResponse)
-	err := c.cc.Invoke(ctx, "/message.UserService/ReceiveMessage", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/message.MessageService/MessageReceived", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *userServiceClient) ReceiveReply(ctx context.Context, in *ReceiveReplyRequest, opts ...grpc.CallOption) (*ReceiveReplyResponse, error) {
+func (c *messageServiceClient) ReplyReceived(ctx context.Context, in *ReceiveReplyRequest, opts ...grpc.CallOption) (*ReceiveReplyResponse, error) {
 	out := new(ReceiveReplyResponse)
-	err := c.cc.Invoke(ctx, "/message.UserService/ReceiveReply", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/message.MessageService/ReplyReceived", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-// UserServiceServer is the server API for UserService service.
-// All implementations should embed UnimplementedUserServiceServer
+// MessageServiceServer is the server API for MessageService service.
+// All implementations should embed UnimplementedMessageServiceServer
 // for forward compatibility
-type UserServiceServer interface {
-	ReceiveMessage(context.Context, *ReceiveMessageRequest) (*ReceiveMessageResponse, error)
-	ReceiveReply(context.Context, *ReceiveReplyRequest) (*ReceiveReplyResponse, error)
+type MessageServiceServer interface {
+	MessageReceived(context.Context, *ReceiveMessageRequest) (*ReceiveMessageResponse, error)
+	ReplyReceived(context.Context, *ReceiveReplyRequest) (*ReceiveReplyResponse, error)
 }
 
-// UnimplementedUserServiceServer should be embedded to have forward compatible implementations.
-type UnimplementedUserServiceServer struct {
+// UnimplementedMessageServiceServer should be embedded to have forward compatible implementations.
+type UnimplementedMessageServiceServer struct {
 }
 
-func (UnimplementedUserServiceServer) ReceiveMessage(context.Context, *ReceiveMessageRequest) (*ReceiveMessageResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReceiveMessage not implemented")
+func (UnimplementedMessageServiceServer) MessageReceived(context.Context, *ReceiveMessageRequest) (*ReceiveMessageResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MessageReceived not implemented")
 }
-func (UnimplementedUserServiceServer) ReceiveReply(context.Context, *ReceiveReplyRequest) (*ReceiveReplyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ReceiveReply not implemented")
+func (UnimplementedMessageServiceServer) ReplyReceived(context.Context, *ReceiveReplyRequest) (*ReceiveReplyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReplyReceived not implemented")
 }
 
-// UnsafeUserServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to UserServiceServer will
+// UnsafeMessageServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to MessageServiceServer will
 // result in compilation errors.
-type UnsafeUserServiceServer interface {
-	mustEmbedUnimplementedUserServiceServer()
+type UnsafeMessageServiceServer interface {
+	mustEmbedUnimplementedMessageServiceServer()
 }
 
-func RegisterUserServiceServer(s grpc.ServiceRegistrar, srv UserServiceServer) {
-	s.RegisterService(&UserService_ServiceDesc, srv)
+func RegisterMessageServiceServer(s grpc.ServiceRegistrar, srv MessageServiceServer) {
+	s.RegisterService(&MessageService_ServiceDesc, srv)
 }
 
-func _UserService_ReceiveMessage_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MessageService_MessageReceived_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ReceiveMessageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServiceServer).ReceiveMessage(ctx, in)
+		return srv.(MessageServiceServer).MessageReceived(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/message.UserService/ReceiveMessage",
+		FullMethod: "/message.MessageService/MessageReceived",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).ReceiveMessage(ctx, req.(*ReceiveMessageRequest))
+		return srv.(MessageServiceServer).MessageReceived(ctx, req.(*ReceiveMessageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _UserService_ReceiveReply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _MessageService_ReplyReceived_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ReceiveReplyRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(UserServiceServer).ReceiveReply(ctx, in)
+		return srv.(MessageServiceServer).ReplyReceived(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/message.UserService/ReceiveReply",
+		FullMethod: "/message.MessageService/ReplyReceived",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(UserServiceServer).ReceiveReply(ctx, req.(*ReceiveReplyRequest))
+		return srv.(MessageServiceServer).ReplyReceived(ctx, req.(*ReceiveReplyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-// UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
+// MessageService_ServiceDesc is the grpc.ServiceDesc for MessageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var UserService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "message.UserService",
-	HandlerType: (*UserServiceServer)(nil),
+var MessageService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "message.MessageService",
+	HandlerType: (*MessageServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "ReceiveMessage",
-			Handler:    _UserService_ReceiveMessage_Handler,
+			MethodName: "MessageReceived",
+			Handler:    _MessageService_MessageReceived_Handler,
 		},
 		{
-			MethodName: "ReceiveReply",
-			Handler:    _UserService_ReceiveReply_Handler,
+			MethodName: "ReplyReceived",
+			Handler:    _MessageService_ReplyReceived_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

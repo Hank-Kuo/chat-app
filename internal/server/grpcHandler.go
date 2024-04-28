@@ -5,8 +5,8 @@ import (
 	"time"
 
 	messageDelivery "github.com/Hank-Kuo/chat-app/internal/api/delivery/message"
-	messageRepository "github.com/Hank-Kuo/chat-app/internal/api/repository/message"
-	messageService "github.com/Hank-Kuo/chat-app/internal/api/service/message"
+	// messageRepository "github.com/Hank-Kuo/chat-app/internal/api/repository/message"
+	// messageService "github.com/Hank-Kuo/chat-app/internal/api/service/message"
 	grpc_middleware "github.com/Hank-Kuo/chat-app/internal/middleware/grpc"
 	messagePb "github.com/Hank-Kuo/chat-app/pb/message"
 
@@ -52,10 +52,8 @@ func (s *Server) newGrpcServer() (func() error, *grpc.Server, error) {
 
 	go_grpc_prometheus.Register(grpcServer)
 
-	messageRepo := messageRepository.NewRepo(s.session, nil)
-	messageSrv := messageService.NewService(s.cfg, messageRepo, s.snowflakeNode, s.logger)
-	messageHandler := messageDelivery.NewGrpcHandler(messageSrv, s.logger)
-	messagePb.RegisterUserServiceServer(grpcServer, messageHandler)
+	messageHandler := messageDelivery.NewGrpcHandler(s.manager, s.logger)
+	messagePb.RegisterMessageServiceServer(grpcServer, messageHandler)
 
 	if s.cfg.Server.Debug {
 		reflection.Register(grpcServer)

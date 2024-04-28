@@ -15,7 +15,6 @@ type Client struct {
 	ClientId    string
 	Socket      *websocket.Conn
 	ConnectTime uint64
-	IsDeleted   bool
 }
 
 type SendReq struct {
@@ -63,40 +62,3 @@ func (c *Client) ValidAuth(cfg *config.Config) error {
 
 	return nil
 }
-
-// var ToClientChan = make(chan clientInfo, 1000)
-
-/*
-func (c *Client) Read() {
-	for {
-		messageType, message, err := c.Socket.ReadMessage()
-		if err != nil {
-			if messageType == -1 && websocket.IsCloseError(err, websocket.CloseGoingAway, websocket.CloseNormalClosure, websocket.CloseNoStatusReceived) {
-				// Manager.DisConnect <- c
-				return
-			} else if messageType != websocket.PingMessage {
-				return
-			}
-		}
-		fmt.Printf("Receive message: %s\n", string(message))
-
-		ToClientChan <- clientInfo{ClientId: "https://piehost.com", MessageId: "messageId", Msg: string(message)}
-	}
-}
-
-func (c *Client) WriteMessage() {
-	for {
-		clientInfo := <-ToClientChan
-		fmt.Println(clientInfo)
-		if conn, err := Manager.GetByClientId(clientInfo.ClientId); err == nil && conn != nil {
-
-			if err := conn.Socket.WriteMessage(websocket.TextMessage, []byte(clientInfo.Msg)); err != nil {
-				Manager.DisConnect <- conn
-				fmt.Println(err)
-				return
-			}
-		}
-	}
-}
-
-*/
