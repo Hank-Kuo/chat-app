@@ -98,26 +98,6 @@ const ReplyModal = (props: ReplyModalProps) => {
       messageContext.wsClient?.send(data);
       setText("");
     }
-    /*
-    addReplyAPI(
-      {
-        message_id: props.selectMessage,
-        user_id: userInfo.id,
-        username: userInfo.name,
-        content: text,
-      },
-      getHeader(userInfo.token)
-    ).then((v) => {
-      if (v["status"] === "success") {
-        const reply: ReplyType = v["data"];
-
-        setReplies((prev) => {
-          return [reply, ...prev];
-        });
-        setText("");
-      }
-    });
-    */
   };
 
   return (

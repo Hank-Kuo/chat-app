@@ -26,52 +26,6 @@ func NewHttpHandler(e *gin.RouterGroup, messageSrv messageSrv.Service, mid *http
 
 	e.GET("/message", handler.GetMessage)
 	e.GET("/reply", handler.GetReply)
-	// e.POST("/message", handler.CreateMessage)
-	// e.POST("/reply", handler.CreateReply)
-
-}
-
-func (h *httpHandler) CreateMessage(c *gin.Context) {
-	ctx := c.Request.Context()
-	ctx, span := tracer.NewSpan(ctx, "MessageHttpHandler.CreateMessage", nil)
-	defer span.End()
-
-	var body dto.CreateMessageReqDto
-	if err := c.ShouldBindJSON(&body); err != nil {
-		httpResponse.Fail(err, h.logger).ToJSON(c)
-		return
-	}
-
-	message, err := h.messageSrv.CreateMessage(ctx, &body)
-	if err != nil {
-		tracer.AddSpanError(span, err)
-		httpResponse.Fail(err, h.logger).ToJSON(c)
-		return
-	}
-
-	httpResponse.OK(http.StatusOK, "create message successfully", message).ToJSON(c)
-
-}
-
-func (h *httpHandler) CreateReply(c *gin.Context) {
-	ctx := c.Request.Context()
-	ctx, span := tracer.NewSpan(ctx, "MessageHttpHandler.CreateReply", nil)
-	defer span.End()
-
-	var body dto.CreateReplyReqDto
-	if err := c.ShouldBindJSON(&body); err != nil {
-		httpResponse.Fail(err, h.logger).ToJSON(c)
-		return
-	}
-
-	reply, err := h.messageSrv.CreateReply(ctx, &body)
-	if err != nil {
-		tracer.AddSpanError(span, err)
-		httpResponse.Fail(err, h.logger).ToJSON(c)
-		return
-	}
-
-	httpResponse.OK(http.StatusOK, "create reply successfully", reply).ToJSON(c)
 }
 
 func (h *httpHandler) GetMessage(c *gin.Context) {
