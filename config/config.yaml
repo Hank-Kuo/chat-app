@@ -37,6 +37,7 @@ redis:
   host: ${REDIS_HOST}
   password: ${REDIS_PASSWORD}
   db: ${REDIS_DB}
+  timeout: 7200
 
 logger:
   development: false
