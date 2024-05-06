@@ -45,8 +45,9 @@ export default function MessageContainer(props: MessageContainerProps) {
       });
     } else {
       setShowJoin(true);
+      setMessages([]);
     }
-  }, [props.selectChannel]);
+  }, [props.selectChannel, props.userChannels]);
 
   const fetchData = () => {
     getMessagesAPI(
@@ -126,15 +127,11 @@ export default function MessageContainer(props: MessageContainerProps) {
                 }
               >
                 <S.ItemInfoBox>
-                  <S.ItemName>{showJoin ? "Default" : v.username}</S.ItemName>
-                  <S.ItemTime>
-                    {showJoin ? "2023/01/01" : createDate}
-                  </S.ItemTime>
+                  <S.ItemName>{v.username}</S.ItemName>
+                  <S.ItemTime>{createDate}</S.ItemTime>
                 </S.ItemInfoBox>
                 <S.ItemBox>
-                  <S.ItemMessage>
-                    {showJoin ? "⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆⋆" : v.content}
-                  </S.ItemMessage>
+                  <S.ItemMessage>{v.content}</S.ItemMessage>
                   <S.ItemReply onClick={() => handleReplyClick(v.message_id)}>
                     REPLY
                   </S.ItemReply>

@@ -59,24 +59,17 @@ func main() {
 	if err != nil {
 		panic(fmt.Errorf("load snowflake: %v", err))
 	}
-	kafkaMessageWriter, err := kafka.NewWriter(cfg.Kafka, "message_topic")
+	kafkaProducer, err := kafka.NewKafkaProducer(cfg.Kafka)
 	if err != nil {
-		panic(fmt.Errorf("Can't connect with messsage kafka: %v", err))
+		panic(fmt.Errorf("Can't connect with kafka producer: %v", err))
 	}
-	defer kafkaMessageWriter.Close()
-
-	kafkaReplyWriter, err := kafka.NewWriter(cfg.Kafka, "reply_topic")
-	if err != nil {
-		panic(fmt.Errorf("Can't connect with reply kafka: %v", err))
-
-	}
-	defer kafkaReplyWriter.Close()
+	defer kafkaProducer.Producer.Close()
 
 	rdb := database.ConnectRedis(&cfg.Redis)
 
 	manager := manager.NewClientManager(rdb, cfg)
 
 	// init server
-	srv := server.NewServer(cfg, db, cassandraSess, rdb, manager, snowflakeNode, kafkaMessageWriter, kafkaReplyWriter, apiLogger)
+	srv := server.NewServer(cfg, db, cassandraSess, rdb, manager, snowflakeNode, kafkaProducer, apiLogger)
 	srv.Run()
 }

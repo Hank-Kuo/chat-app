@@ -23,8 +23,6 @@ func (h *grpcHandler) MessageReceived(ctx context.Context, request *messagePb.Re
 	_, span := tracer.NewSpan(ctx, "MessageGrpcHandler.ReceiveMessage", nil)
 	defer span.End()
 
-	h.manager.ToClientChan <- manager.ToClientInfo{OriginClientId: request.OriginClientID, ClientId: request.ClientId, InstanceId: request.InstanceId, Data: request.Message}
-
 	return &messagePb.ReceiveMessageResponse{}, nil
 
 }
@@ -33,8 +31,6 @@ func (h *grpcHandler) ReplyReceived(ctx context.Context, request *messagePb.Rece
 
 	_, span := tracer.NewSpan(ctx, "MessageGrpcHandler.ReceiveReply", nil)
 	defer span.End()
-
-	h.manager.ToClientChan <- manager.ToClientInfo{OriginClientId: request.OriginClientID, ClientId: request.ClientId, InstanceId: request.InstanceId, Data: request.Reply}
 
 	return &messagePb.ReceiveReplyResponse{}, nil
 }

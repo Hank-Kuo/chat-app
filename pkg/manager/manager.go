@@ -3,9 +3,11 @@ package manager
 import (
 	"context"
 	"errors"
+	"net/http"
 	"sync"
 
 	"github.com/Hank-Kuo/chat-app/config"
+	httpResponse "github.com/Hank-Kuo/chat-app/pkg/response/http_response"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -43,8 +45,11 @@ func (manager *ClientManager) Start() {
 		case client := <-manager.DisConnect:
 			_ = client.Socket.Close()
 			manager.DelClient(client)
-			client.IsDeleted = true
 			client = nil
+		case m := <-manager.ToClientChan:
+			if conn, err := manager.GetByClientId(m.ClientId); err == nil {
+				httpResponse.OK(http.StatusOK, "send message successfully", m.Data).ToWebSocketJSON(conn.Socket)
+			}
 		}
 	}
 }
@@ -58,7 +63,6 @@ func (m *ClientManager) AddClient(client *Client) error {
 		return err
 	}
 
-	// m.Rdb.Set(m.Ctx, "bac09a89-df1a-4644-ba2f-89f4da8d0456", "localhost2", 0)
 	m.ClientIdMap[client.ClientId] = client
 	return nil
 }
@@ -75,12 +79,6 @@ func (m *ClientManager) DelClient(client *Client) error {
 		return err
 	}
 	return nil
-}
-
-func (m *ClientManager) Count() int {
-	m.ClientIdMapLock.RLock()
-	defer m.ClientIdMapLock.RUnlock()
-	return len(m.ClientIdMap)
 }
 
 func (m *ClientManager) GetByClientId(clientId string) (*Client, error) {

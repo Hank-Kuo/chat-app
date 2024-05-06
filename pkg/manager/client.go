@@ -23,10 +23,8 @@ type SendReq struct {
 }
 
 type ToClientInfo struct {
-	OriginClientId string
-	ClientId       string
-	InstanceId     string
-	Data           interface{}
+	ClientId string
+	Data     interface{}
 }
 
 func NewClient(conn *websocket.Conn) *Client {

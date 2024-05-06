@@ -2,7 +2,6 @@ package message
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/Hank-Kuo/chat-app/config"
@@ -73,7 +72,6 @@ func (h *websocketHandler) Send(c *gin.Context) {
 
 	h.manager.AddClient(clientSocket)
 	h.manager.Connect <- clientSocket
-	go BroadcastMessage(h.manager)
 
 	for {
 		messageType, message, err := clientSocket.Socket.ReadMessage()
@@ -102,27 +100,7 @@ func (h *websocketHandler) Send(c *gin.Context) {
 						tracer.AddSpanError(span, err)
 						httpResponse.Fail(err, h.logger).ToWebSocketJSON(clientSocket.Socket)
 					} else {
-
 						httpResponse.OK(http.StatusOK, "create message successfully", newMessage).ToWebSocketJSON(clientSocket.Socket)
-
-						if channels, err := h.channelSrv.GetUserByChannel(ctx, body.ChannelID); err == nil {
-							// get group client ip
-							for _, ch := range channels {
-								if ch.UserID != body.UserID {
-									instance, err := h.manager.GetInstacesByClients(ch.UserID)
-									if err != nil {
-										// offline user
-										if err = h.messageSrv.MessageNotification(ctx, ch.UserID, newMessage); err != nil {
-											tracer.AddSpanError(span, err)
-										}
-									} else {
-										// online user
-										h.manager.ToClientChan <- manager.ToClientInfo{OriginClientId: body.UserID, ClientId: ch.UserID, InstanceId: instance, Data: newMessage}
-									}
-								}
-							}
-						}
-
 					}
 				}
 			} else if m.Action == "CreateReply" {
@@ -139,25 +117,6 @@ func (h *websocketHandler) Send(c *gin.Context) {
 						httpResponse.Fail(err, h.logger).ToWebSocketJSON(clientSocket.Socket)
 					} else {
 						httpResponse.OK(http.StatusOK, "create reply successfully", newReply).ToWebSocketJSON(clientSocket.Socket)
-
-						if channels, err := h.channelSrv.GetUserByChannel(ctx, body.ChannelID); err == nil {
-							for _, ch := range channels {
-								if ch.UserID != body.UserID {
-									instance, err := h.manager.GetInstacesByClients(ch.UserID)
-									if err != nil {
-										// offline user˝
-										if err = h.messageSrv.ReplyNotification(ctx, ch.UserID, newReply); err != nil {
-											tracer.AddSpanError(span, err)
-										}
-									} else {
-										// online user
-										h.manager.ToClientChan <- manager.ToClientInfo{OriginClientId: body.UserID, ClientId: ch.UserID, InstanceId: instance, Data: newReply}
-									}
-								}
-
-							}
-						}
-
 					}
 				}
 			} else {
@@ -167,45 +126,4 @@ func (h *websocketHandler) Send(c *gin.Context) {
 		}
 	}
 
-}
-
-func BroadcastMessage(m *manager.ClientManager) {
-	for {
-		select {
-		case clientInfo := <-m.ToClientChan:
-			if m.InstanceId == clientInfo.InstanceId {
-				// send to local
-				if conn, err := m.GetByClientId(clientInfo.ClientId); err == nil && conn != nil {
-					httpResponse.OK(http.StatusOK, "send message successfully", clientInfo.Data).ToWebSocketJSON(conn.Socket)
-				}
-			} else {
-				/*
-					queryHost := fmt.Sprintf(`%s:%s`, clientInfo.InstanceId, m.cfg.Server.GrpcPort)
-					if conn, err := grpc.Dial(queryHost, grpc.WithInsecure()); err == nil {
-
-					}
-
-					c := messagePb.NewMessageServiceClient(conn)
-
-					if _, err = c.MessageReceived(context.Background(), &messagePb.ReceiveMessageRequest{
-						OriginClientID: "bac09a89-df1a-4644-ba2f-89f4da8d0456",
-						ClientId:       "257e4caf-fb4b-43a1-a4b3-cca94f583bd5",
-						InstanceId:     "127.0.0.1",
-						Message: &messagePb.ReceiveMessageRequest_Message{
-							ChannelId: "b37c4896-70e5-4a94-bbab-7de13e5e41ff",
-							MessageId: 1984282932957937700,
-							Content:   "send from other",
-							UserId:    "bac09a89-df1a-4644-ba2f-89f4da8d0456",
-							Username:  "other",
-							CreatedAt: "2023-12-01T05:52:17.581988Z",
-						},
-					}); err != nil {
-
-					}
-				*/
-				// send to other instance
-				fmt.Println(clientInfo.InstanceId)
-			}
-		}
-	}
 }

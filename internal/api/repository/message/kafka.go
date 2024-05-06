@@ -7,23 +7,25 @@ import (
 	"github.com/Hank-Kuo/chat-app/internal/models"
 	"github.com/Hank-Kuo/chat-app/pkg/tracer"
 
+	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/pkg/errors"
-	"github.com/segmentio/kafka-go"
 )
 
-func (r *messageRepo) PublishMessage(ctx context.Context, userID string, message *models.Message) error {
+func (r *messageRepo) PublishMessage(ctx context.Context, message *models.Message) error {
 	ctx, span := tracer.NewSpan(ctx, "messageRepo.PublishMessage", nil)
 	defer span.End()
 
-	msg := kafka.Message{
+	topic := fmt.Sprintf("message_%s", message.ChannelID)
+	msg := &kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Key:            []byte("topic_message"),
 		Value: []byte(fmt.Sprintf(`{
-			"received_user_id": "%s", "channel_id": "%s", "message_id": "%s", 
-			"user_id": "%s", "username": "%s", "created_at": "%s", "content": "%s"
-			}`, userID, message.ChannelID, message.MessageID, message.UserID,
-			message.Username, message.CreatedAt, message.Content)),
+			"channel_id": "%s", "message_id": %d, "content": "%s", "user_id": "%s", "username": "%s", "created_at": "%s"
+			}`, message.ChannelID, message.MessageID, message.Content, message.UserID,
+			message.Username, message.CreatedAt.Format("2006-01-02T15:04:05.999999999Z"))),
 	}
 
-	if err := r.kafkaMessageWriter.WriteMessages(ctx, msg); err != nil {
+	if err := r.kafkaProducer.Produce(msg); err != nil {
 		tracer.AddSpanError(span, err)
 		return errors.Wrap(err, "messageRepo.PublishMessage")
 	}
@@ -31,19 +33,22 @@ func (r *messageRepo) PublishMessage(ctx context.Context, userID string, message
 	return nil
 }
 
-func (r *messageRepo) PublishReply(ctx context.Context, userID string, reply *models.Reply) error {
+func (r *messageRepo) PublishReply(ctx context.Context, reply *models.Reply) error {
 	ctx, span := tracer.NewSpan(ctx, "messageRepo.PublishReply", nil)
 	defer span.End()
 
-	msg := kafka.Message{
+	topic := fmt.Sprintf("message_%s", reply.ChannelID)
+	msg := &kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Key:            []byte("topic_reply"),
 		Value: []byte(fmt.Sprintf(`{
-			"received_user_id": "%s", "channel_id": "%s", "message_id": "%s", 
-			"reply_id": "%s", "user_id": "%s", "username": "%s", 
-			"created_at": "%s", "content": "%s"}`, userID, reply.ChannelID,
-			reply.MessageID, reply.UserID, reply.Username, reply.CreatedAt, reply.Content)),
+			"channel_id": "%s", "message_id": %d, 
+			"reply_id": %d, "user_id": "%s", "username": "%s", 
+			"created_at": "%s", "content": "%s"}`, reply.ChannelID,
+			reply.MessageID, reply.ReplyID, reply.UserID, reply.Username, reply.CreatedAt.Format("2006-01-02T15:04:05.999999999Z"), reply.Content)),
 	}
 
-	if err := r.kafkaReplyWriter.WriteMessages(ctx, msg); err != nil {
+	if err := r.kafkaProducer.Produce(msg); err != nil {
 		tracer.AddSpanError(span, err)
 		return errors.Wrap(err, "messageRepo.PublishReply")
 	}

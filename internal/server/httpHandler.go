@@ -7,9 +7,6 @@ import (
 	authDelivery "github.com/Hank-Kuo/chat-app/internal/api/delivery/auth"
 	channelDelivery "github.com/Hank-Kuo/chat-app/internal/api/delivery/channel"
 	messageDelivery "github.com/Hank-Kuo/chat-app/internal/api/delivery/message"
-	authRepository "github.com/Hank-Kuo/chat-app/internal/api/repository/auth"
-	channelRepository "github.com/Hank-Kuo/chat-app/internal/api/repository/channel"
-	messageRepository "github.com/Hank-Kuo/chat-app/internal/api/repository/message"
 	authService "github.com/Hank-Kuo/chat-app/internal/api/service/auth"
 	channelService "github.com/Hank-Kuo/chat-app/internal/api/service/channel"
 	messageService "github.com/Hank-Kuo/chat-app/internal/api/service/message"
@@ -18,28 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (s *Server) registerHttpHanders(engine *gin.Engine) {
-
-	middleware := http_middleware.NewMiddlewares(s.cfg, s.logger)
-
-	api := engine.Group("/api")
-
-	authRepo := authRepository.NewRepo(s.db)
-	authSrv := authService.NewService(s.cfg, authRepo, s.logger)
-	authDelivery.NewHttpHandler(api, authSrv, s.logger)
-
-	channelRepo := channelRepository.NewRepo(s.db, s.rdb)
-	channelSrv := channelService.NewService(s.cfg, channelRepo, s.logger)
-	channelDelivery.NewHttpHandler(api, channelSrv, middleware, s.logger)
-
-	messageRepo := messageRepository.NewRepo(s.session, s.kafkaMessageWriter, s.kafkaReplyWriter)
-	messageSrv := messageService.NewService(s.cfg, messageRepo, s.snowflakeNode, s.logger)
-	messageDelivery.NewHttpHandler(api, messageSrv, middleware, s.logger)
-	messageDelivery.NewWebSocketHandler(api, s.cfg, messageSrv, channelSrv, s.manager, middleware, s.logger)
-
-}
-
-func (s *Server) newHttpServer() *http.Server {
+func (s *Server) newHttpServer(authSrv authService.Service, channelSrv channelService.Service, messageSrv messageService.Service) *http.Server {
 	if s.cfg.Server.Debug {
 		gin.SetMode(gin.DebugMode)
 	} else {
@@ -48,8 +24,13 @@ func (s *Server) newHttpServer() *http.Server {
 
 	engine := gin.Default()
 	http_middleware.NewGlobalMiddlewares(engine)
+	middleware := http_middleware.NewMiddlewares(s.cfg, s.logger)
 
-	s.registerHttpHanders(engine)
+	api := engine.Group("/api")
+	authDelivery.NewHttpHandler(api, authSrv, s.logger)
+	channelDelivery.NewHttpHandler(api, channelSrv, middleware, s.logger)
+	messageDelivery.NewHttpHandler(api, messageSrv, middleware, s.logger)
+	messageDelivery.NewWebSocketHandler(api, s.cfg, messageSrv, channelSrv, s.manager, middleware, s.logger)
 
 	httpServer := &http.Server{
 		Addr:           ":" + s.cfg.Server.Port,

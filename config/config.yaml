@@ -63,12 +63,13 @@ metric:
 
 
 kafka:
-  brokers: ${KAFKA_BROKER}
-  groupID: "customer-1"
-  topics:
-    - name: message_topic
-      partitions: 1
-      replicationFactor: 1
-    - name: reply_topic
-      partitions: 1
-      replicationFactor: 1
+  producer: 
+    broker: ${KAFKA_BROKER} 
+    acks: "all"
+    idepotence: true
+  consumer:
+    broker: ${KAFKA_BROKER} 
+    groupID: ${KAFKA_CONSUMER_GROUP_ID}
+    timeout: 5000
+    offsetReset: "latest"
+    autoOffset: false

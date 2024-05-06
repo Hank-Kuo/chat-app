@@ -5,8 +5,6 @@ import (
 	"time"
 
 	messageDelivery "github.com/Hank-Kuo/chat-app/internal/api/delivery/message"
-	// messageRepository "github.com/Hank-Kuo/chat-app/internal/api/repository/message"
-	// messageService "github.com/Hank-Kuo/chat-app/internal/api/service/message"
 	grpc_middleware "github.com/Hank-Kuo/chat-app/internal/middleware/grpc"
 	messagePb "github.com/Hank-Kuo/chat-app/pb/message"
 

@@ -63,6 +63,11 @@ func (srv *messageSrv) CreateMessage(ctx context.Context, message *dto.CreateMes
 		return nil, errors.Wrap(err, "MessageService.CreateMessage")
 	}
 
+	if err := srv.messageRepo.PublishMessage(c, m); err != nil {
+		tracer.AddSpanError(span, err)
+		return nil, errors.Wrap(err, "MessageService.CreateMessage")
+	}
+
 	return m, nil
 }
 
@@ -80,9 +85,15 @@ func (srv *messageSrv) CreateReply(ctx context.Context, reply *dto.CreateReplyRe
 		Username:  reply.Username,
 		CreatedAt: time.Now().In(srv.cfg.Server.Location),
 	}
+
 	if err := srv.messageRepo.CreateReply(c, r); err != nil {
 		tracer.AddSpanError(span, err)
 		return nil, errors.Wrap(err, "MessageService.CreateReply")
+	}
+
+	if err := srv.messageRepo.PublishReply(c, r); err != nil {
+		tracer.AddSpanError(span, err)
+		return nil, errors.Wrap(err, "MessageService.CreateMessage")
 	}
 
 	return r, nil
@@ -157,24 +168,15 @@ func (srv *messageSrv) GetReply(ctx context.Context, r *dto.GetReplyQueryDto) (*
 }
 
 func (srv *messageSrv) MessageNotification(ctx context.Context, userID string, message *models.Message) error {
-	c, span := tracer.NewSpan(ctx, "MessageService.MessageNotification", nil)
+	_, span := tracer.NewSpan(ctx, "MessageService.MessageNotification", nil)
 	defer span.End()
-
-	if err := srv.messageRepo.PublishMessage(c, userID, message); err != nil {
-		tracer.AddSpanError(span, err)
-		return errors.Wrap(err, "MessageService.MessageNotification")
-	}
 
 	return nil
 }
 
 func (srv *messageSrv) ReplyNotification(ctx context.Context, userID string, reply *models.Reply) error {
-	c, span := tracer.NewSpan(ctx, "MessageService.ReplyNotification", nil)
+	_, span := tracer.NewSpan(ctx, "MessageService.ReplyNotification", nil)
 	defer span.End()
 
-	if err := srv.messageRepo.PublishReply(c, userID, reply); err != nil {
-		tracer.AddSpanError(span, err)
-		return errors.Wrap(err, "MessageService.ReplyNotification")
-	}
 	return nil
 }

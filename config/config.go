@@ -78,16 +78,21 @@ type CassandraConfig struct {
 	Password     string   `mapstructure:"password"`
 }
 
-type topic struct {
-	Name              string `mapstructure:"name"`
-	Partition         int    `mapstructure:"partition"`
-	ReplicationFactor int    `mapstructure:"replicationFactor"`
+type kafkaProducer struct {
+	Brokers    string `mapstructure:"broker"`
+	Acks       string `mapstructure:"acks"`
+	Idepotence bool   `mapstructure:"idepotence"`
 }
-
+type kafkaConsumer struct {
+	Brokers     string `mapstructure:"broker"`
+	GroupID     string `mapstructure:"groupID"`
+	Timeout     int    `mapstructure:"timeout"`
+	OffsetReset string `mapstructure:"offsetReset"`
+	AutoOffset  bool   `mapstructure:"autoOffset"`
+}
 type KafkaConfig struct {
-	Brokers []string `mapstructure:"brokers"`
-	Topics  []topic  `mapstructure:"topics"`
-	GroupID string   `mapstructure:"groupID"`
+	Producer kafkaProducer `mapstructure:"producer"`
+	Consumer kafkaConsumer `mapstructure:"consumer"`
 }
 
 type JaegerConfig struct {

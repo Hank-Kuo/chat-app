@@ -2,6 +2,23 @@
 ## Introduction
 Design a high performance and scalable chat-app in distribution system. 
 
+Here is two arch I came up with, 
+1. Using grpc as communication channel to send message directly
+- This method can't ensure that the message send to users, it may miss some messages.   
+
+![chat-app-arch-1](doc/chat-app-arch-1.png) 
+![chat-app-websocket-1](doc/chat-app-websocket-1.png) 
+
+2. Using message queue to broadcast message to each user.
+- Each user can subscribe the channel they joined.
+
+![chat-app-arch-2](doc/chat-app-arch-2.png) 
+
+
+For this project, I adopt arch 2, and I use channel_id as each topic.
+
+
+
 ### How to run
 
 In developer mod: 
@@ -135,9 +152,10 @@ FYI cache some issuse
 
 
 Kafka is one of popular message queue, it's scalable, high performance, high throughput and fault-tolerant open source. For message queue, we can use queue to accomplish pub/sub system / streaming pipeline / event driven arch / decouple system complexity. The kafka is more suit for high throughput, it can deal with million message per second, it always uses in event log process, streaming/data pipeline, async job. the RabbitMQ is more suit for complexity routing system (routing and exchange), but it only can deal with throunds messages per second, it supports priority queue (FIFO), it always uses in event driven arch, decouple component, async job. 
-The kafka has some compnents we need to know: producer, customer, broker, topic, partition. 
+The kafka has some compnents we need to know: producer, consumer, broker, topic, partition. 
 
-<!-- ![alt text](image.png) -->
+
+
 Kafka 
 - partition / replicas
 - exactly once 
@@ -283,16 +301,43 @@ Message API
 
 
 ### Database schema 
+PostgreSQL tables
+users table
+| id            | username      |    email               | password      | created_at    | login_time    |
+| ------------- | ------------- | ---------------------- | ------------- | ------------- | ------------- |
+| uuid (PK)     | VARCHAR(255)  | VARCHAR(255) (unique)  | VARCHAR(255)  | TIMESTAMP     | TIMESTAMP     |
+
+channel
+| id            | name          | user_id   | created_at    | 
+| ------------- | ------------- | --------- | ------------- | 
+| uuid (PK)     | VARCHAR(255)  | uuid (FK) | TIMESTAMP     | 
 
 
+user_to_channel
+| user_id       | channel_id    | created_at    |
+| ------------- | ------------- | ------------- |
+| uuid (PK/FK)  | uuid (PK/FK)  | TIMESTAMP     |
 
+Cassandra
+
+message table
+| user_id       | channel_id    | created_at    |
+| ------------- | ------------- | ------------- |
+| uuid (PK/FK)  | uuid (PK/FK)  | TIMESTAMP     |
+
+reply table
+| user_id       | channel_id    | created_at    |
+| ------------- | ------------- | ------------- |
+| uuid (PK/FK)  | uuid (PK/FK)  | TIMESTAMP     |
 
 ## Todo
-- in broadcast, call grpc api
 - websocket error handler with kafka 
-- test all function
-- consumer 
+  - retry queue
+- notification consumer 
   - send message to notification 
-- saga pattern 
+- write message & reply to redis
+  - get message and reply from redis -> cursor
 - docker-compose for all service 
 - screen shots
+Need to run stateful server
+- saga pattern 

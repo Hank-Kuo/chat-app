@@ -4,6 +4,7 @@ go 1.21.0
 
 require (
 	github.com/bwmarrin/snowflake v0.3.0
+	github.com/confluentinc/confluent-kafka-go/v2 v2.3.0
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-playground/validator/v10 v10.14.0
 	github.com/go-sql-driver/mysql v1.7.1
