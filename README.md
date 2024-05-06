@@ -2,6 +2,19 @@
 ## Introduction
 Design a high performance and scalable chat-app in distribution system. 
 
+Login page 
+![chat-app-loginPage](doc/chat-app-loginPage.png) 
+
+Register page 
+![chat-app-registerPage](doc/chat-app-registerPage.png) 
+
+Index page 
+![chat-app-indexPage](doc/chat-app-indexPage.png) 
+
+Reply page 
+![chat-app-replyPage](doc/chat-app-replyPage.png) 
+
+
 Here is two arch I came up with, 
 1. Using grpc as communication channel to send message directly
 - This method can't ensure that the message send to users, it may miss some messages.   
@@ -16,6 +29,7 @@ Here is two arch I came up with,
 
 
 For this project, I adopt arch 2, and I use channel_id as each topic.
+
 
 
 
