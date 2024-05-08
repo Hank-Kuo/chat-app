@@ -5317,6 +5317,11 @@ remark-rehype@^10.0.0:
     mdast-util-to-hast "^12.1.0"
     unified "^10.0.0"
 
+remix-esbuild-override@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/remix-esbuild-override/-/remix-esbuild-override-3.1.0.tgz#9f586dd4ded58bdc48920b8a855a6596ce8d2f56"
+  integrity sha512-K9eIukm1n+K0d2ZPEbRYoj/NHWp3rsa0R9YO/U3bNDnjCVNItJBLSIS5sNqoELLb5kdnbXP2062gJ1yWpjMHrQ==
+
 "require-like@>= 0.1.1":
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/require-like/-/require-like-0.1.2.tgz#ad6f30c13becd797010c468afa775c0c0a6b47fa"
